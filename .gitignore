@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+/agentic coding
+/contexts
+
 # next.js
 /.next/
 /out/
