@@ -29,7 +29,7 @@ export function AiSidebar({ isOpen, onClose }: AiSidebarProps) {
         </h2>
         <button
           type="button"
-          className="p-2 rounded-md hover:bg-bg-elevated text-text-primary focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
+          className="cursor-pointer rounded-md p-2 text-text-primary transition-colors hover:bg-bg-elevated focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
           onClick={onClose}
           aria-label="Close AI sidebar"
         >

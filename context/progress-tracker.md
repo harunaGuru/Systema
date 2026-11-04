@@ -8,7 +8,7 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Complete UI-004 - Editor chrome (navbar + left sidebar shell).
+- Refine the left sidebar controls and button interaction feedback.
 
 ## Completed
 
@@ -21,14 +21,17 @@ Update this file after every meaningful implementation change.
 - **UI-004 - Editor Chrome (Navbar + Left Sidebar Shell).** Added `EditorNavbar`, `ProjectSidebar`, and `EditorShell`, then replaced `/` with the shell. `lucide-react@1.67.0` was already installed, so no package change was needed; the specified `npm install lucide-react` command was attempted but stalled in the network-restricted environment.
 - **UI-004 verification (Node.js v24.22.1):** Checks 1-4 and 6-10 passed (Lucide present, required component files/content, page renders `EditorShell`, no hardcoded hex colors, prohibited packages empty, runtime returned HTTP 200 with “PROJECTS” in the HTML, and production build/typecheck/lint passed). Check 5's immediate DOM-removal assertion is superseded by the user's request for animated closing: sidebars remain mounted but visually off-screen, transparent, and inert while closed so they can animate in both directions. UI-004 is complete.
 - **UI-004 visual refinement (user screenshots):** Projects sidebar now has a separate colored header, full-width clickable My Projects/Shared tabs, and the centered “No projects yet.” state beneath the tabs; it contains no project cards. The navbar right section has Save, Import, Share, and a purple AI button. The AI button toggles a floating right sidebar with Prompt, Spec, and Comments tabs. Both sidebars use smooth transform/opacity transitions and `motion-reduce:transition-none`; they start closed and become inert while closed. Save, Import, Share remain disabled visual placeholders without handlers. Headless Chrome verified HTTP 200, initial closed states, correct tab/content vertical order, Shared tab selection by pointer input, both sidebars' open and close transitions, AI tabs, and reduced-motion setting `transition-property: none`. Build, `npx tsc --noEmit`, and lint all passed after these changes.
+- **Review follow-up — Navbar disabled states and AUTH-001 route requirements.** Save, Import, and Share now apply hover feedback only while enabled while retaining disabled pointer handling and a distinct disabled appearance. AUTH-001 assigns unauthenticated `/` redirects to `app/page.tsx` by making `/` public to the proxy, and Check 3 now calls for runtime checks across page and API/TRPC routes plus active proxy configuration. Lint, typecheck, and production build passed. Runtime auth checks were not run because the Clerk/proxy implementation and API/TRPC routes are not present yet.
+- **Navbar visibility fix.** Restored `EditorShell` as the root page content; the placeholder “Systema” page had replaced the shell, so the navbar was not being rendered. Verification: lint, typecheck, and production build passed.
 
 ## In Progress
 
+- **Sidebar and navbar interaction refinement — In Progress.** Moved the description and Create project action above the tabs, kept a horizontal selected-tab indicator while making the content panel a stable flex-centered region, and added hover feedback to the navbar controls. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed on Node.js v24.22.1. The reported hydration attributes (`suppresshydrationwarning`, `data-qb-installed`) do not appear in the app source; the root layout is static, so disable the browser extension injecting them when testing localhost. Browser visual review remains.
 - **UI-004 visual refinement.** Restyled the left sidebar to match the supplied reference (Projects header, full-width clickable My Projects/Shared shadcn tabs, centered empty state below the tabs, no project cards). User clarified the four right-side navbar controls are Save, Import, Share, and AI; the AI button toggles a floating right sidebar using the Prompt, Spec, and Comments tabs in `ui-context.md`. Both sidebars now transition in and out while remaining mounted off-screen and inert when closed; reduced-motion disables transitions. Save, Import, and Share are disabled visual placeholders without handlers.
 
 ## Next Up
 
-- Finish the UI-004 visual refinement, then await the next feature specification.
+- Manually review the left-tab slide/hover states in a browser, then await the next feature specification.
 ## Open Questions
 
 1. **AI provider fallback policy (detailed).** `architecture.md` says Gemini primary, Groq fallback, but does not define retry counts, timeouts, or failover behavior. **Blocks:** AI-Assisted Design unit. **Proposed standard:** one retry on transient failure (timeout, 5xx, connection error), respect `Retry-After` on 429, exponential backoff before failover, immediate failover on non-retryable errors (400, 401, 403, 404, malformed response). Awaiting approval to record in `architecture.md`.

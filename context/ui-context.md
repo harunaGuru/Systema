@@ -78,7 +78,7 @@ shadcn/ui on top of Tailwind CSS. Components live in `components/ui/`. Add new c
 
 - **Homepage:** Feature sections with a reusable top navbar and two floating sidebars. The main content extends beneath the floating panels rather than being boxed by them.
 - **TopNavbar (reusable):** Three sections. (1) Sidebar toggle wired to hooks. (2) AI job status indicator and recovery snapshot restore icon. (3) Clerk user avatar showing the user's initials from first and last name, opening a menu with logout and profile actions.
-- **Left sidebar (floating):** Header, then two tabs — **Shared** and **Owner** — listing projects, with a **Create Project** button below the tabs.
+- **Left sidebar (floating):** Header, a short description (“Create a project or jump into an existing room”), a **Create Project** button, then two tabs — **My Projects** and **Shared** — listing projects. The create action and description appear above the tabs; the empty state remains below the active tab.
 - **Create Project modal:** Name input with an auto-generated slug displayed beneath it (the slug serves as the project ID), and a Create button that creates the project and redirects to `/editor/[projectid]`. This modal has no tabs.
 - **Right sidebar (floating):** AI tabs — prompt, spec, and comments.
 - **Editor (`/editor/[projectid]`):** Same reusable top navbar and two floating sidebars. The canvas is the main surface. A centered floating shape toolbar sits at the bottom with draggable shapes.
@@ -105,4 +105,4 @@ All six shapes are SVG-based so they remain crisp when resized. Each node is use
 
 ## Interaction States
 
-Every interactive element must define default, hover, focus-visible, active, and disabled states using the tokens above. The focus ring uses `accent-primary` at 2px offset. Loading states use the AI accent only for AI-related work. Empty states use `text-muted` on `bg-surface`.
+Every interactive element must define default, hover, focus-visible, active, and disabled states using the tokens above. Buttons and tab triggers show a pointer cursor and visible hover feedback. Switching the left sidebar tabs animates the selected tab indicator horizontally. The focus ring uses `accent-primary` at 2px offset. Loading states use the AI accent only for AI-related work. Empty states use `text-muted` on `bg-surface`.
