@@ -1,5 +1,5 @@
-import { EditorShell as Shell } from "@/components/editor/editor-shell"
+import EditorPage from "./editor/page"
 
 export default function Home() {
-  return <Shell />
+  return <EditorPage />
 }

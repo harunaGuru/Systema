@@ -1,17 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { Folder, Plus, X } from "lucide-react"
+import { Folder, Pencil, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+export type ProjectSidebarProject = {
+  id: string
+  name: string
+  isOwner: boolean
+}
 
 type ProjectSidebarProps = {
   isOpen: boolean
   onClose: () => void
+  projects?: ProjectSidebarProject[]
+  onRename?: (project: ProjectSidebarProject) => void
+  onDelete?: (project: ProjectSidebarProject) => void
+  onCreate?: () => void
 }
 
-export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
+export function ProjectSidebar({
+  isOpen,
+  onClose,
+  projects = [],
+  onRename,
+  onDelete,
+  onCreate,
+}: ProjectSidebarProps) {
   const [activeTab, setActiveTab] = useState("owner")
+  const visibleProjects = projects.filter(
+    (project) => project.isOwner === (activeTab === "owner"),
+  )
 
   function handleTabChange(value: string) {
     setActiveTab(value)
@@ -44,7 +64,10 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
         <p className="mb-4 text-sm leading-6 text-text-muted">
           Create a project or jump into an existing room
         </p>
-        <Button className="mb-4 w-full rounded-md bg-accent-ai text-bg-base hover:bg-accent-ai/90 focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2">
+        <Button
+          className="mb-4 w-full rounded-md bg-accent-ai text-bg-base hover:bg-accent-ai/90 focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
+          onClick={onCreate}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create project
         </Button>
@@ -71,15 +94,71 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
           </TabsList>
           <TabsContent
             value="owner"
-            className="flex min-h-48 flex-1 items-center justify-center py-8 text-sm text-text-muted"
+            className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto py-4"
           >
-            No projects yet.
+            {visibleProjects.length === 0 ? (
+              <p className="flex flex-1 items-center justify-center py-8 text-sm text-text-muted">
+                No projects yet.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {visibleProjects.map((project) => (
+                  <li
+                    key={project.id}
+                    className="group flex items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-bg-elevated"
+                  >
+                    <span className="truncate text-sm text-text-primary">{project.name}</span>
+                    {project.isOwner && (
+                      <span className="flex shrink-0 items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          type="button"
+                          aria-label={`Rename ${project.name}`}
+                          title={`Rename ${project.name}`}
+                          onClick={() => onRename?.(project)}
+                          className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          type="button"
+                          aria-label={`Delete ${project.name}`}
+                          title={`Delete ${project.name}`}
+                          onClick={() => onDelete?.(project)}
+                          className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </TabsContent>
           <TabsContent
             value="shared"
-            className="flex min-h-48 flex-1 items-center justify-center py-8 text-sm text-text-muted"
+            className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto py-4"
           >
-            No projects yet.
+            {visibleProjects.length === 0 ? (
+              <p className="flex flex-1 items-center justify-center py-8 text-sm text-text-muted">
+                No projects yet.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {visibleProjects.map((project) => (
+                  <li
+                    key={project.id}
+                    className="flex items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-bg-elevated"
+                  >
+                    <span className="truncate text-sm text-text-primary">{project.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </TabsContent>
         </Tabs>
       </div>
