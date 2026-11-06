@@ -8,7 +8,7 @@
 | UI              | Tailwind CSS + React Flow                | Canvas rendering, styling, graph interaction                           |
 | Real-time       | Liveblocks                               | Live collaborative canvas state, presence, comments, conflict handling |
 | Auth            | Clerk                                    | Identity verification and session management                           |
-| Database        | Neon Postgres + Prisma                   | Project metadata, collaborators, snapshot records, artifact paths      |
+| Database        | Neon Postgres + Prisma 7 (ESM, driver adapter)                   | Project metadata, collaborators, snapshot records, artifact paths      |
 | Object Storage  | Vercel Blob                              | Markdown specs and canvas JSON snapshots                               |
 | Background Jobs | Trigger.dev                              | AI graph generation/modification and spec generation                   |
 | AI              | Google Gemini (primary), Groq (fallback) | Model calls, executed only inside Trigger.dev jobs                     |

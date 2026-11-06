@@ -1,4 +1,4 @@
-# Progress Tracker
+﻿# Progress Tracker
 
 Update this file after every meaningful implementation change.
 
@@ -8,9 +8,18 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Await the next feature specification after UI-006.
+- AUTH-004 complete. Awaiting the next feature specification.
 
 ## Completed
+
+- **AUTH-004 — Collaborator Management Actions.** Added `actions/collaborators.ts` with Zod validation (`zod@4.6.7`), typed `AccessError` mapping, owner-only add/remove checks, Clerk email lookup via `getUserList({ emailAddress: [email] })`, duplicate rejection, Prisma row creation/deletion, and P2025 handling. Checks 1–5 passed. Check 6 build, standalone typecheck, and lint passed on Node.js v24.22.1 after cleanup. Check 7 used the temporary test route: owner add succeeded, duplicate add was rejected, owner removal succeeded, editor add and removal were both rejected. The route, test-only action overrides, project, and collaborator test rows were removed. Check 9 found Trigger.dev, Liveblocks client, and Vercel Blob packages absent. Actions are not wired to UI; a future unit will add that UI. `lib/server/auth.ts`, `lib/db.ts`, `components/ui/*`, `app/globals.css`, `planning/*`, and `AGENTS.md` were unchanged; the tracker was the only context file changed.
+
+- **AUTH-003 — Liveblocks Auth Endpoint.** Installed `@liveblocks/node@3.24.5` and added `POST /api/liveblocks-auth`. It validates the room, calls `requireProjectAccess` before issuing a token, uses typed `AccessError` codes for 401/403/404 responses, and returns the Liveblocks authorization response. Checks 1–6 passed; Check 7 build, typecheck, and lint passed on Node.js v24.22.1; Check 8 SDK authorization returned status 200 with a string body; Check 9 confirmed Trigger.dev and Vercel Blob packages are absent. Temporary SDK script removed. Endpoint authorization path was verified by code inspection plus AUTH-002 helper checks; an end-to-end request with a signed-in Clerk session remains for the user after COLLAB-001 configures the client. User confirmed `LIVEBLOCKS_SECRET_KEY` was set; its value was not printed. `components/ui/*`, `app/globals.css`, `planning/*`, and `AGENTS.md` were unchanged; only this tracker file was changed under `context/*`.
+
+- **AUTH-001 � Accepted complete by user.** Verification notes from its prior implementation are retained above for history. User confirmed both Clerk keys are already in `.env.local`; environment files were not read. The selected Clerk app was initialized through the Clerk CLI. Installed `@clerk/nextjs@7.9.24` and `@clerk/ui@1.42.3`; setup added provider/auth-page scaffolding and Clerk agent skills. Added the Systema dark appearance, responsive sign-in/up pages, protected proxy, root auth redirect, and signed-in navbar `UserButton`. `app/loading.tsx` supplies the Cache Components boundary. Checks 1–2 and 4–9 passed; Check 3 page-route requests passed (`/editor` redirects to sign-in and `/` streams a redirect to sign-in), but its API/TRPC route-class check is blocked because this project has no API/TRPC route and the spec forbids adding one. TypeScript and lint passed using Node.js v24.22.1. The default Turbopack `npm run build` fails when its child process resolves the host nvm shim (“No active Node.js version is configured”); `next build --webpack` completed successfully. `/sign-in` returned 200. Manual sign-in/out and UserButton interaction remain for user verification. UI behavior was preserved in source; production build passed with webpack.
+- **Access helper typed errors.** Added exported `AccessError` with `UNAUTHORIZED`, `NOT_FOUND`, and `FORBIDDEN` codes while preserving existing messages. Updated AUTH-002, AUTH-003, and AUTH-004 contracts so callers branch on codes and keep the existing 401/404/403 status mapping. Validation: lint, typecheck, and production build passed. A standalone runtime import probe was unavailable because importing the server helper in that Node mode fails in Next/Clerk's React context initialization.
+
+- **AUTH-002 — Access Helper + Prisma 7 + Neon — Done after adapter revision.** Prisma 7.10.1, client 7.10.1, and `@prisma/adapter-pg@7.10.1` with `pg@8.23.1`; `@prisma/adapter-neon` removed. The init migration is applied and `prisma migrate status` reported schema up to date. The real DB-backed access check passed for owner (200), editor (200), and non-member (403). Build, typecheck, lint, and cleanup passed; the temporary route and test rows were removed. Trigger.dev pooling remains deferred to AI-001.
 
 - **UI-001 — Project Initialization.** Confirmed the existing Next.js 16.4.3 App Router scaffold, ESLint, Tailwind CSS v4, root `app/`, `@/*` alias, placeholder `/` page, and global stylesheet integration. Required strict TypeScript flags are enabled.
 - **UI-001 verification (Node.js v24.22.1):** `npm run build`, `npx tsc --noEmit`, and `npm run lint` passed. The development server returned HTTP 200 for `/` with the placeholder content.
@@ -30,13 +39,12 @@ Update this file after every meaningful implementation change.
 ## In Progress
 
 
-
 - **Sidebar and navbar interaction refinement — In Progress.** Moved the description and Create project action above the tabs, kept a horizontal selected-tab indicator while making the content panel a stable flex-centered region, and added hover feedback to the navbar controls. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed on Node.js v24.22.1. The reported hydration attributes (`suppresshydrationwarning`, `data-qb-installed`) do not appear in the app source; the root layout is static, so disable the browser extension injecting them when testing localhost. Browser visual review remains.
 - **UI-004 visual refinement.** Restyled the left sidebar to match the supplied reference (Projects header, full-width clickable My Projects/Shared shadcn tabs, centered empty state below the tabs, no project cards). User clarified the four right-side navbar controls are Save, Import, Share, and AI; the AI button toggles a floating right sidebar using the Prompt, Spec, and Comments tabs in `ui-context.md`. Both sidebars now transition in and out while remaining mounted off-screen and inert when closed; reduced-motion disables transitions. Save, Import, and Share are disabled visual placeholders without handlers.
 
 ## Next Up
 
-- Manually review the left-tab slide/hover states in a browser, then await the next feature specification.
+- Await the next feature specification.
 ## Open Questions
 
 1. **AI provider fallback policy (detailed).** `architecture.md` says Gemini primary, Groq fallback, but does not define retry counts, timeouts, or failover behavior. **Blocks:** AI-Assisted Design unit. **Proposed standard:** one retry on transient failure (timeout, 5xx, connection error), respect `Retry-After` on 429, exponential backoff before failover, immediate failover on non-retryable errors (400, 401, 403, 404, malformed response). Awaiting approval to record in `architecture.md`.
@@ -52,6 +60,7 @@ Update this file after every meaningful implementation change.
 - **Ownership model: `Project.ownerId` + `Collaborator` table.** Owner is not a member row; editors are `Collaborator` rows with `role: editor`. Reason: single source of truth for ownership, simpler authorization query. See `architecture.md` Auth and Access Model.
 - **Liveblocks Storage is live collaborative state; snapshots are for recovery and spec generation.** Reason: separation between real-time sync and durable persistence. See `architecture.md` invariant #6.
 - **Server Actions for form mutations; Route Handlers for Liveblocks auth, Trigger.dev job triggering, and artifact access.** Reason: Server Actions fit form flows; Route Handlers handle external callbacks and auth tokens. See `architecture.md` system boundaries and `code-standards.md`.
+- Prisma 7 with ESM ("type": "module"), @prisma/adapter-pg, and prisma.config.ts. Prisma 6 is not used. The prisma and @prisma/client packages are pinned to major 7 to avoid the Prisma 8 prerelease.
 - **Split secrets between Vercel and Trigger.dev.** Vercel holds Clerk, Liveblocks public key, Blob token, `DATABASE_URL`. Trigger.dev holds `DATABASE_URL`, Blob token, Gemini/Groq keys, Liveblocks secret (if spec job reads canvas). Reason: Trigger.dev runs outside Vercel and needs its own access. See `architecture.md` and `code-standards.md`.
 
 ## Session Notes

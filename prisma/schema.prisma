@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id            String           @id
+  name          String
+  ownerId       String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  collaborators Collaborator[]
+  snapshots     CanvasSnapshot[]
+  artifacts     Artifact[]
+}
+
+model Collaborator {
+  id        String           @id @default(cuid())
+  projectId String
+  userId    String
+  role      CollaboratorRole @default(EDITOR)
+  createdAt DateTime         @default(now())
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+enum CollaboratorRole {
+  EDITOR
+}
+
+model CanvasSnapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  blobPath  String
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Artifact {
+  id        String       @id @default(cuid())
+  projectId String
+  type      ArtifactType
+  blobPath  String
+  createdAt DateTime     @default(now())
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum ArtifactType {
+  SPEC
+  CANVAS_JSON
+}

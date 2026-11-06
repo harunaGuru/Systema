@@ -56,11 +56,11 @@
 
 - Postgres (Neon) is the authoritative source for project metadata, ownership, collaborators, and artifact paths. Vercel Blob stores only generated artifacts (Markdown specs, canvas JSON snapshots). Authoritative metadata never lives in Blob (see `architecture.md` Storage Model).
 - Every `blobPath` stored in Postgres must reference an existing Vercel Blob object. Project deletion cascades must clean up associated blobs (see `architecture.md` invariant #4).
-- Create a single Prisma Client instance in `lib/db.ts` guarded by a global variable to avoid multiple instances during Next.js hot-reload.
-- Prisma Client must not be imported into client bundles. It lives in `lib/` and is guarded with `import 'server-only'`.
 - Use Prisma transactions for operations that touch multiple related records (for example, creating a project and its owner association in one transaction).
 - Validate all external input before it reaches Prisma. Database constraints are a safety net, not a substitute for user-facing validation.
 - Canvas state in Liveblocks Storage is the live collaborative source. Persisted snapshots are for recovery and spec generation, not for live sync (see `architecture.md` invariant #6).
+
+Prisma 7 setup (ESM, `prisma.config.ts`, `@prisma/adapter-pg`, generated output path, `DATABASE_URL_UNPOOLED`) is defined in `feature-spec/AUTH-002.md` and the `lib/db.ts` it creates. Do not change the Prisma version, adapter, or generated output path without a new specification.
 
 ## File Organization
 
