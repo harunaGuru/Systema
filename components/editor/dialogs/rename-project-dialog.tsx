@@ -16,13 +16,17 @@ type RenameProjectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentName: string
-  onSubmit: (name: string) => void
+  pending: boolean
+  error: string | null
+  onSubmit: (name: string) => Promise<void>
 }
 
 export function RenameProjectDialog({
   open,
   onOpenChange,
   currentName,
+  pending,
+  error,
   onSubmit,
 }: RenameProjectDialogProps) {
   return (
@@ -30,6 +34,8 @@ export function RenameProjectDialog({
       {open && (
         <RenameProjectDialogForm
           currentName={currentName}
+          pending={pending}
+          error={error}
           onOpenChange={onOpenChange}
           onSubmit={onSubmit}
         />
@@ -41,16 +47,20 @@ export function RenameProjectDialog({
 function RenameProjectDialogForm({
   onOpenChange,
   currentName,
+  pending,
+  error,
   onSubmit,
-}: Pick<RenameProjectDialogProps, "onOpenChange" | "currentName" | "onSubmit">) {
+}: Pick<
+  RenameProjectDialogProps,
+  "onOpenChange" | "currentName" | "pending" | "error" | "onSubmit"
+>) {
   const [name, setName] = useState(currentName)
   const trimmedName = name.trim()
 
   function submit() {
-    if (!trimmedName || trimmedName === currentName.trim()) return
+    if (pending || !trimmedName || trimmedName === currentName.trim()) return
 
-    onSubmit(trimmedName)
-    onOpenChange(false)
+    void onSubmit(trimmedName)
   }
 
   return (
@@ -72,12 +82,13 @@ function RenameProjectDialogForm({
           }}
           placeholder="Project name"
         />
+        {error && <p className="text-sm text-state-error" role="alert">{error}</p>}
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={pending}>
             Cancel
           </Button>
           <Button
-            disabled={!trimmedName || trimmedName === currentName.trim()}
+            disabled={pending || !trimmedName || trimmedName === currentName.trim()}
             onClick={submit}
           >
             Save

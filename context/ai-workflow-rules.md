@@ -52,6 +52,9 @@ Sensitive (require approval before structural changes):
 
 - `lib/db.ts` — the Prisma singleton. Adding models or changing the connection setup affects the whole application.
 
+**Canvas Layout & Drag-and-Drop (Critical)**
+Do not modify the CSS layout chain (`h-full`, `calc(100dvh - 3.5rem)`) or the drag-and-drop event handlers in `components/editor/canvas/canvas.tsx` and `components/editor/editor-shell.tsx` unless explicitly instructed. This area is highly fragile. Any change that causes the React Flow parent container to lose its explicit height will make all nodes invisible, which requires manual browser debugging to fix. Always verify using Playwright MCP that the `.react-flow` container has a non-zero height after any layout change.
+
 Not protected:
 
 - Route pages, including Clerk sign-in and sign-out pages, are ordinary app-level pages. They are governed by `code-standards.md`, not this list.

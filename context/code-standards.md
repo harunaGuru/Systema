@@ -1,5 +1,12 @@
 # Code Standards
 
+## Canvas Constraints
+
+- **Do not modify the drag-and-drop event handling or layout sizing** (`onDragOver`, `onDrop`, `100dvh`, container heights, or `ReactFlow` wrapper styles) in the editor canvas.
+- This specific layout and event wiring took extensive debugging to resolve a React Flow parent container sizing warning. Changing the `EditorShell` or `Canvas` wrapper heights will collapse the canvas and break node rendering.
+- If a layout bug must be fixed, use browser automation (Playwright MCP) to verify the `getBoundingClientRect()` of the `.react-flow` container before and after the change. It must never resolve to `0` height or width.
+- Do not use `onDropCapture` or `onDragOverCapture`; the native events on the wrapper div are correct.
+
 ## General
 
 - Modules are small and single-purpose; a file should have one clear reason to change.

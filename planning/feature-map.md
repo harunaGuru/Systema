@@ -36,7 +36,7 @@ Systema is decomposed into **8 capability groups** and **30 implementation units
 | ---------------------- | --------- | ----- | --------------------------------------------------------------------------------- |
 | UI Foundation          | `UI`      | 6     | Next.js, design system, fonts, editor chrome, editor home, project dialogs (mock) |
 | Authentication         | `AUTH`    | 4     | Clerk wiring, access helper, Liveblocks auth, collaborator actions                |
-| Project Lifecycle      | `PROJ`    | 5     | Prisma + schema, create, list, editor access, delete                              |
+| Project Lifecycle      | `PROJ`    | 6     | Prisma + schema, create, list, editor access, delete                              |
 | Canvas & Graph         | `CANVAS`  | 5     | React Flow shell, shapes, CRUD, color palette, toolbar, templates                 |
 | Collaboration          | `COLLAB`  | 3     | Liveblocks room, presence, comments                                               |
 | AI-Assisted Design     | `AI`      | 3     | Trigger.dev setup, graph task, sidebar prompt tab                                 |
@@ -189,6 +189,20 @@ Systema is decomposed into **8 capability groups** and **30 implementation units
 - **Verification:** Owner deletes; blobs gone; editor cannot; build passes.
 - **Risk:** High (destructive, invariant #4).
 - **Planning note in spec:** Document the cascade order (Postgres first or Blob first), failure recovery if Blob deletion partially fails, and owner-only enforcement.
+
+**PROJ-006 — Rename Project**
+
+- **Objective:** Server Action to rename an owned project. The display name changes; the slug (Project.id) does not, because it is the permanent URL and is referenced by Liveblocks room IDs and stored artifact paths.
+
+- **Outcome:** actions/rename-project.ts exports renameProject(projectId, newName); owner-only; validates name; updates Project.name. The Rename dialog from UI-006 is wired in EditorShell.
+
+- **Scope boundary:** Name only. No slug change, no blob changes, no editor route changes.
+
+- **Dependencies:** PROJ-002 (action pattern), PROJ-003 (list and dialog wiring).
+
+- **Verification:** Owner renames; non-owner rejected; slug unchanged; dialog closes on success.
+
+- **Risk:** Low.
 
 ### Canvas & Graph (`CANVAS`)
 
@@ -344,14 +358,15 @@ Systema is decomposed into **8 capability groups** and **30 implementation units
 ## 5. Requirement-to-Feature Traceability
 
 | Requirement                          | Units                                     |
-| ------------------------------------ | ----------------------------------------- |
+| ------------------------------------ | ----------------------------------------- | ---------- |
 | Clerk sign-in/sign-out               | AUTH-001                                  |
 | Owner/Editor roles                   | AUTH-002, AUTH-004                        |
 | Project creation with slug           | PROJ-002                                  |
 | Project list (Owner/Shared)          | PROJ-003                                  |
 | Editor access check                  | PROJ-004, AUTH-002                        |
 | Project deletion + blobs             | PROJ-005                                  |
-| Manual canvas editing (independent)  | CANVAS-001, CANVAS-002                    |
+| Manual canvas editing (independent)  | CANVAS-001,                               |
+| Rename project                       | PROJ-006                                  | CANVAS-002 |
 | Six shapes, resize bounds            | CANVAS-001                                |
 | Node color palette                   | CANVAS-003                                |
 | Editing composability (any origin)   | CANVAS-002, CANVAS-005, AI-003            |
@@ -376,7 +391,7 @@ Systema is decomposed into **8 capability groups** and **30 implementation units
 ## 6. Dependency Register
 
 | Unit        | Depends on                      | Provides to                                 |
-| ----------- | ------------------------------- | ------------------------------------------- |
+| ----------- | ------------------------------- | ------------------------------------------- | --- |
 | UI-001      | —                               | All                                         |
 | UI-002      | UI-001                          | UI-004                                      |
 | UI-003      | UI-002                          | All UI                                      |
@@ -391,7 +406,8 @@ Systema is decomposed into **8 capability groups** and **30 implementation units
 | PROJ-002    | PROJ-001, UI-006                | PROJ-003                                    |
 | PROJ-003    | PROJ-002                        | PROJ-004                                    |
 | PROJ-004    | AUTH-002, PROJ-003              | PROJ-005, CANVAS-001                        |
-| PROJ-005    | PROJ-004                        | —                                           |
+| PROJ-005    | PROJ-004                        |
+| PROJ-006    | PROJ-002, PROJ-003              | —                                           | —   |
 | CANVAS-001  | PROJ-004, UI-004                | CANVAS-002, CANVAS-004                      |
 | CANVAS-002  | CANVAS-001                      | CANVAS-003, CANVAS-005, COLLAB-001, AI-002  |
 | CANVAS-003  | CANVAS-002                      | —                                           |
@@ -446,21 +462,22 @@ Strictly linear. Every unit is completed and verified before the next begins.
 | 13    | PROJ-003    | Project list            |
 | 14    | PROJ-004    | Editor access           |
 | 15    | PROJ-005    | Delete project          |
-| 16    | CANVAS-001  | Canvas shell + shapes   |
-| 17    | CANVAS-002  | Node/edge CRUD          |
-| 18    | CANVAS-003  | Color palette           |
-| 19    | CANVAS-004  | Shape toolbar           |
-| 20    | CANVAS-005  | Templates               |
-| 21    | COLLAB-001  | Liveblocks room         |
-| 22    | COLLAB-002  | Presence                |
-| 23    | COLLAB-003  | Comments                |
-| 24    | AI-001      | Trigger.dev setup       |
-| 25    | AI-002      | Graph task              |
-| 26    | AI-003      | AI sidebar              |
-| 27    | PERSIST-001 | Autosave + manual save  |
-| 28    | PERSIST-002 | Snapshot restore        |
-| 29    | SPEC-001    | Spec task               |
-| 30    | SPEC-002    | Spec preview + download |
+| 16    | PROJ-006    | Rename project          |
+| 17    | CANVAS-001  | Canvas shell + shapes   |
+| 18    | CANVAS-002  | Node/edge CRUD          |
+| 19    | CANVAS-003  | Color palette           |
+| 20    | CANVAS-004  | Shape toolbar           |
+| 21    | CANVAS-005  | Templates               |
+| 22    | COLLAB-001  | Liveblocks room         |
+| 23    | COLLAB-002  | Presence                |
+| 24    | COLLAB-003  | Comments                |
+| 25    | AI-001      | Trigger.dev setup       |
+| 26    | AI-002      | Graph task              |
+| 27    | AI-003      | AI sidebar              |
+| 28    | PERSIST-001 | Autosave + manual save  |
+| 29    | PERSIST-002 | Snapshot restore        |
+| 30    | SPEC-001    | Spec task               |
+| 31    | SPEC-002    | Spec preview + download |
 
 **Note:** `PROJ-001` is placed after `AUTH-004` but before `PROJ-002`. `AUTH-002` already created the schema and client; `PROJ-001` finalizes and verifies them as a standalone unit before project creation uses them. This is intentional, not redundant.
 
@@ -555,5 +572,6 @@ The feature map is **ready for specification generation with conditions:**
 | ------- | ---------- | ----------------------------------------------------------------------------------- | ---------------------- |
 | 1.0     | 2026-11-02 | Initial feature map                                                                 | Superseded             |
 | 2.0     | 2026-11-02 | Reordered visuals-first; strictly sequential; 30 units; planning notes inside specs | Awaiting user approval |
+| 2.1     | 2026-11-06 | Insert PROJ-006 (rename project); total units 31                                    | Approved               |
 
 **Protected files unchanged:** `context/*` and `AGENTS.md` were not modified.

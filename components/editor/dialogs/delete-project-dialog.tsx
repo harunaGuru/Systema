@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +9,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 type DeleteProjectDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  projectName: string
-  onConfirm: () => void
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectName: string;
+  onConfirm: () => Promise<boolean> | boolean;
+};
 
 export function DeleteProjectDialog({
   open,
@@ -23,9 +24,17 @@ export function DeleteProjectDialog({
   projectName,
   onConfirm,
 }: DeleteProjectDialogProps) {
-  function confirm() {
-    onConfirm()
-    onOpenChange(false)
+  const [pending, setPending] = useState(false);
+
+  async function confirm() {
+    if (pending) return;
+
+    setPending(true);
+    try {
+      if (await onConfirm()) onOpenChange(false);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -34,18 +43,19 @@ export function DeleteProjectDialog({
         <DialogHeader>
           <DialogTitle>Delete project</DialogTitle>
           <DialogDescription>
-            This will permanently delete &quot;{projectName}&quot;. This action cannot be undone.
+            This will permanently delete &quot;{projectName}&quot;. This action
+            cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={confirm}>
+          <Button variant="destructive" onClick={confirm} disabled={pending}>
             Delete
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

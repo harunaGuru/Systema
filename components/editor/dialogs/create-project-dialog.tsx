@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { slugify } from "@/lib/slug"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,14 +16,10 @@ import { Input } from "@/components/ui/input"
 type CreateProjectDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string) => void
-}
-
-function createSlug(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
+  onSubmit: (
+    name: string,
+    idSuffix: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function CreateProjectDialog({
@@ -42,14 +39,24 @@ function CreateProjectDialogForm({
   onSubmit,
 }: Pick<CreateProjectDialogProps, "onOpenChange" | "onSubmit">) {
   const [name, setName] = useState("")
-  const slug = createSlug(name.trim())
+  const [idSuffix, setIdSuffix] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  const slug = slugify(name.trim())
+  const projectId = slug && idSuffix ? `${slug}-${idSuffix}` : slug
 
-  function submit() {
+  async function submit() {
     const trimmedName = name.trim()
-    if (!trimmedName || !slug) return
+    if (!trimmedName || !slug || !idSuffix) return
 
-    onSubmit(trimmedName)
-    onOpenChange(false)
+    setPending(true)
+    setError(null)
+    try {
+      const result = await onSubmit(trimmedName, idSuffix)
+      if (!result.ok) setError(result.error)
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
@@ -65,7 +72,12 @@ function CreateProjectDialogForm({
             autoFocus
             aria-label="Project name"
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              setName(event.target.value)
+              if (event.target.value.trim() && !idSuffix) {
+                setIdSuffix(crypto.randomUUID().replace(/-/g, "").slice(0, 12))
+              }
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault()
@@ -74,13 +86,14 @@ function CreateProjectDialogForm({
             }}
             placeholder="Project name"
           />
-          <p className="text-xs text-text-muted">Slug: {slug || "—"}</p>
+          <p className="text-xs text-text-muted">Slug: {projectId || "—"}</p>
+          {error && <p className="text-sm text-state-error" role="alert">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button disabled={!name.trim() || !slug} onClick={submit}>
+          <Button disabled={!name.trim() || !slug || !idSuffix || pending} onClick={submit}>
             Create
           </Button>
         </DialogFooter>

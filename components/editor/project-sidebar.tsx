@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Folder, Pencil, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,7 +15,9 @@ export type ProjectSidebarProject = {
 type ProjectSidebarProps = {
   isOpen: boolean
   onClose: () => void
-  projects?: ProjectSidebarProject[]
+  ownedProjects?: Array<{ id: string; name: string }>
+  sharedProjects?: Array<{ id: string; name: string }>
+  currentProjectId?: string
   onRename?: (project: ProjectSidebarProject) => void
   onDelete?: (project: ProjectSidebarProject) => void
   onCreate?: () => void
@@ -23,15 +26,14 @@ type ProjectSidebarProps = {
 export function ProjectSidebar({
   isOpen,
   onClose,
-  projects = [],
+  ownedProjects = [],
+  sharedProjects = [],
+  currentProjectId,
   onRename,
   onDelete,
   onCreate,
 }: ProjectSidebarProps) {
   const [activeTab, setActiveTab] = useState("owner")
-  const visibleProjects = projects.filter(
-    (project) => project.isOwner === (activeTab === "owner"),
-  )
 
   function handleTabChange(value: string) {
     setActiveTab(value)
@@ -96,44 +98,61 @@ export function ProjectSidebar({
             value="owner"
             className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto py-4"
           >
-            {visibleProjects.length === 0 ? (
+            {ownedProjects.length === 0 ? (
               <p className="flex flex-1 items-center justify-center py-8 text-sm text-text-muted">
                 No projects yet.
               </p>
             ) : (
               <ul className="space-y-1">
-                {visibleProjects.map((project) => (
+                {ownedProjects.map((project) => (
                   <li
                     key={project.id}
-                    className="group flex items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-bg-elevated"
+                    className="group flex items-center justify-between gap-1 rounded-md hover:bg-bg-elevated"
                   >
-                    <span className="truncate text-sm text-text-primary">{project.name}</span>
-                    {project.isOwner && (
-                      <span className="flex shrink-0 items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          type="button"
-                          aria-label={`Rename ${project.name}`}
-                          title={`Rename ${project.name}`}
-                          onClick={() => onRename?.(project)}
-                          className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          type="button"
-                          aria-label={`Delete ${project.name}`}
-                          title={`Delete ${project.name}`}
-                          onClick={() => onDelete?.(project)}
-                          className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                    <Link
+                      href={`/editor/${project.id}`}
+                      aria-current={project.id === currentProjectId ? "page" : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-3 py-2"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        {project.id === currentProjectId && (
+                          <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-accent-primary" />
+                        )}
+                        <span className="truncate text-sm text-text-primary">{project.name}</span>
                       </span>
-                    )}
+                    </Link>
+                    <span className="flex shrink-0 items-center gap-1 pr-2">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        type="button"
+                        aria-label={`Rename ${project.name}`}
+                        title={`Rename ${project.name}`}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          onRename?.({ ...project, isOwner: true })
+                        }}
+                        className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        type="button"
+                        aria-label={`Delete ${project.name}`}
+                        title={`Delete ${project.name}`}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          onDelete?.({ ...project, isOwner: true })
+                        }}
+                        className="text-text-muted opacity-0 transition-opacity hover:bg-bg-base hover:text-text-primary group-hover:opacity-100 focus-visible:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -143,18 +162,29 @@ export function ProjectSidebar({
             value="shared"
             className="flex min-h-48 flex-1 flex-col gap-2 overflow-y-auto py-4"
           >
-            {visibleProjects.length === 0 ? (
+            {sharedProjects.length === 0 ? (
               <p className="flex flex-1 items-center justify-center py-8 text-sm text-text-muted">
                 No projects yet.
               </p>
             ) : (
               <ul className="space-y-1">
-                {visibleProjects.map((project) => (
+                {sharedProjects.map((project) => (
                   <li
                     key={project.id}
-                    className="flex items-center justify-between gap-2 rounded-md px-3 py-2 hover:bg-bg-elevated"
+                    className="rounded-md hover:bg-bg-elevated"
                   >
-                    <span className="truncate text-sm text-text-primary">{project.name}</span>
+                    <Link
+                      href={`/editor/${project.id}`}
+                      aria-current={project.id === currentProjectId ? "page" : undefined}
+                      className="flex items-center justify-between gap-2 rounded-md px-3 py-2"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        {project.id === currentProjectId && (
+                          <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-accent-primary" />
+                        )}
+                        <span className="truncate text-sm text-text-primary">{project.name}</span>
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
