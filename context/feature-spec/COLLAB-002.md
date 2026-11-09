@@ -33,7 +33,7 @@ Do not modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `
 - **Contract consumed:** Liveblocks presence state, the AUTH-003 endpoint (now passing user info).
 - **Approved decisions:**
   - The Liveblocks auth endpoint (AUTH-003) currently passes only the Clerk user ID as `userInfo`. It must be updated to pass the user's name so cursors and avatars can display something human-readable.
-  - Cursors use the `Cursors` component from `@liveblocks/react-flow` if it provides one, or a custom component using `useOthers` and `useMyPresence`. The spec allows either, but prefers the official component.
+  - Use a custom cursor component based on `useOthers` and `useReactFlow`. The `LiveblocksProvider` in COLLAB-001 does not configure `resolveUsers`, so do not use the official `Cursors` component or rely on `useUser`.
   - Avatars use the shadcn `Avatar` primitive (which the agent must install if not present) or a simple circular `div` with initials.
   - The free plan allows up to 10 simultaneous connections, so the avatar stack will never exceed 10 items .
 
@@ -50,7 +50,7 @@ The `Presence` type should include `cursor: { x: number; y: number } | null`.
 The endpoint currently creates a session using the Clerk `userId`. Change it to fetch the user's full name from Clerk and pass it in `userInfo`:
 
 - Import `clerkClient` from `@clerk/nextjs/server`.
-- After `const { userId } = await auth()`, fetch the user: `const user = await clerkClient.users.getUser(userId)`.
+- After `const { userId } = await auth()`, obtain the Clerk client and fetch the user: `const clerk = await clerkClient(); const user = await clerk.users.getUser(userId)`.
 - Use `user.firstName` and `user.lastName` to build a display name (fallback to `userId` if both are null).
 - Pass `userInfo: { name: displayName }` to `liveblocks.prepareSession(userId, { userInfo: { name: displayName } })`.
 
@@ -60,19 +60,9 @@ Do not change the access control logic. Only add the user info.
 
 A client component (`"use client"`).
 
-If `@liveblocks/react-flow` exports a `Cursors` component, use it:
+Implement a custom cursor overlay using `useOthers` from `@liveblocks/react` and `useReactFlow` from `@xyflow/react`. For each other connection, read its cursor from `other.presence.cursor` and its label from `other.info.name`; COLLAB-002's auth endpoint supplies that name through `prepareSession(..., { userInfo })`. Convert the cursor's flow coordinates to screen coordinates with `flowToScreenPosition`.
 
-START OF live-cursors.tsx
-
-    import { Cursors } from "@liveblocks/react-flow";
-
-    export function LiveCursors() {
-      return <Cursors />;
-    }
-
-END OF live-cursors.tsx
-
-If it does not, implement a custom cursor overlay using `useOthers` from `@liveblocks/react` and `useReactFlow` to map the remote cursor's flow coordinates to screen coordinates. Use a simple SVG cursor icon and a name label. The label background should be the user's connection color from Liveblocks (`other.connectionId` mapped to a color, or `other.info.color` if you add it to `UserMeta`).
+Use a simple SVG cursor icon and a name label. Do not call `useUser` or depend on `resolveUsers`: the existing `LiveblocksProvider` configures only `authEndpoint`, while authenticated connection info is available on each `other.info`.
 
 ### 4. `components/editor/navbar-presence.tsx`
 
@@ -117,7 +107,7 @@ Import `NavbarPresence` and render it in the center section of the navbar (which
 ## E. Integration Contracts
 
 - **Contract introduced:** `LiveCursors` and `NavbarPresence`.
-- **Contract consumed:** `UserMeta` (with name), Liveblocks `useOthers`, `@liveblocks/react-flow` `Cursors` (if available).
+- **Contract consumed:** `UserMeta` (with name), Liveblocks `useOthers`, and React Flow's `flowToScreenPosition`.
 
 ## F. Scope Limits
 
@@ -168,7 +158,7 @@ Status: `PASS` or `FAIL`.
 If PASS, report:
 
 - One-line result per check.
-- Whether the official `Cursors` component or a custom implementation was used.
+- Confirm that the custom cursor reads each collaborator's `other.info.name` from authenticated connection info, without `useUser` or a `resolveUsers` callback.
 - Whether `NavbarPresence` was placed in the navbar or as a floating UI in the canvas (and why).
 - Confirmation that the auth endpoint was updated to pass the user's name.
 - Confirmation that `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `AGENTS.md`, `lib/db.ts`, `lib/server/auth.ts`, `actions/*`, `components/editor/project-sidebar.tsx`, `components/editor/canvas/shape-toolbar.tsx`, `components/editor/canvas/color-palette.tsx`, and `components/editor/canvas/edge.tsx` are unchanged (except the auth endpoint).

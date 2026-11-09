@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import type { MouseEvent, ReactNode, Ref } from "react"
-import { useCallback, useLayoutEffect, useRef, useState } from "react"
+import type { MouseEvent, ReactNode, Ref } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   NodeResizer,
   Handle,
@@ -11,9 +11,10 @@ import {
   useStore,
   type Node,
   type NodeProps,
-} from "@xyflow/react"
-import { Info } from "lucide-react"
-import { ColorPalette } from "./color-palette"
+} from "@xyflow/react";
+import { useOthers } from "@liveblocks/react";
+import { Info } from "lucide-react";
+import { ColorPalette } from "./color-palette";
 
 export type ShapeType =
   | "rectangle"
@@ -21,19 +22,25 @@ export type ShapeType =
   | "circle"
   | "pill"
   | "cylinder"
-  | "hexagon"
+  | "hexagon";
 
-export type NodeColor = "slate" | "blue" | "violet" | "green" | "amber" | "rose"
+export type NodeColor =
+  | "slate"
+  | "blue"
+  | "violet"
+  | "green"
+  | "amber"
+  | "rose";
 
 export type SystemaNodeData = {
-  name: string
-  description: string
-  color: NodeColor
-}
+  name: string;
+  description: string;
+  color: NodeColor;
+};
 
-type SystemaFlowNode = Node<SystemaNodeData, ShapeType>
-type SystemaNodeProps = NodeProps<SystemaFlowNode>
-type SystemaShapeProps = SystemaNodeProps & { shape: ShapeType }
+type SystemaFlowNode = Node<SystemaNodeData, ShapeType>;
+type SystemaNodeProps = NodeProps<SystemaFlowNode>;
+type SystemaShapeProps = SystemaNodeProps & { shape: ShapeType };
 
 const nodeColorClasses: Record<
   NodeColor,
@@ -69,18 +76,19 @@ const nodeColorClasses: Record<
     border: "stroke-node-rose-border",
     text: "text-node-rose-text",
   },
-}
+};
 
 type ShapeWrapperProps = {
-  shape: ShapeType
-  color: NodeColor
-  width: number
-  height: number
-  selected: boolean
-  rootRef: Ref<HTMLDivElement>
-  palette?: ReactNode
-  children: ReactNode
-}
+  shape: ShapeType;
+  color: NodeColor;
+  width: number;
+  height: number;
+  selected: boolean;
+  remoteSelectionColors: string[];
+  rootRef: Ref<HTMLDivElement>;
+  palette?: ReactNode;
+  children: ReactNode;
+};
 
 function ShapeWrapper({
   shape,
@@ -88,18 +96,19 @@ function ShapeWrapper({
   width,
   height,
   selected,
+  remoteSelectionColors,
   rootRef,
   palette,
   children,
 }: ShapeWrapperProps) {
-  const classes = nodeColorClasses[color]
-  const stroke = selected ? "stroke-accent-primary" : classes.border
-  const strokeWidth = selected ? 2 : 1
-  const inset = strokeWidth / 2
-  const innerWidth = Math.max(0, width - strokeWidth)
-  const innerHeight = Math.max(0, height - strokeWidth)
+  const classes = nodeColorClasses[color];
+  const stroke = selected ? "stroke-accent-primary" : classes.border;
+  const strokeWidth = selected ? 2 : 1;
+  const inset = strokeWidth / 2;
+  const innerWidth = Math.max(0, width - strokeWidth);
+  const innerHeight = Math.max(0, height - strokeWidth);
 
-  let shapeElement: ReactNode
+  let shapeElement: ReactNode;
 
   switch (shape) {
     case "rectangle":
@@ -111,15 +120,15 @@ function ShapeWrapper({
           height={innerHeight}
           rx={8}
         />
-      )
-      break
+      );
+      break;
     case "diamond":
       shapeElement = (
         <polygon
           points={`${width / 2},${inset} ${width - inset},${height / 2} ${width / 2},${height - inset} ${inset},${height / 2}`}
         />
-      )
-      break
+      );
+      break;
     case "circle":
       shapeElement = (
         <ellipse
@@ -128,8 +137,8 @@ function ShapeWrapper({
           rx={innerWidth / 2}
           ry={innerHeight / 2}
         />
-      )
-      break
+      );
+      break;
     case "pill":
       shapeElement = (
         <rect
@@ -139,11 +148,11 @@ function ShapeWrapper({
           height={innerHeight}
           rx={height / 2}
         />
-      )
-      break
+      );
+      break;
     case "cylinder": {
-      const radiusX = innerWidth / 2
-      const radiusY = Math.min(height * 0.16, innerHeight / 2)
+      const radiusX = innerWidth / 2;
+      const radiusY = Math.min(height * 0.16, innerHeight / 2);
       shapeElement = (
         <>
           <path
@@ -157,16 +166,16 @@ function ShapeWrapper({
             fill="none"
           />
         </>
-      )
-      break
+      );
+      break;
     }
     case "hexagon":
       shapeElement = (
         <polygon
           points={`${width * 0.25},${inset} ${width * 0.75},${inset} ${width - inset},${height / 2} ${width * 0.75},${height - inset} ${width * 0.25},${height - inset} ${inset},${height / 2}`}
         />
-      )
-      break
+      );
+      break;
   }
 
   return (
@@ -191,12 +200,26 @@ function ShapeWrapper({
         >
           {shapeElement}
         </g>
+        {remoteSelectionColors.map((remoteColor, index) => (
+          <g
+            key={`${remoteColor}-${index}`}
+            fill="none"
+            stroke={remoteColor}
+            strokeWidth={3}
+            vectorEffect="non-scaling-stroke"
+            strokeLinejoin="round"
+          >
+            {shapeElement}
+          </g>
+        ))}
       </svg>
-      <div className={`absolute inset-0 flex items-center justify-center p-2 text-center font-mono text-xs ${classes.text}`}>
+      <div
+        className={`absolute inset-0 flex items-center justify-center p-2 text-center font-mono text-xs ${classes.text}`}
+      >
         {children}
       </div>
     </div>
-  )
+  );
 }
 
 function SystemaShapeNode({
@@ -207,68 +230,80 @@ function SystemaShapeNode({
   width = 180,
   height = 100,
 }: SystemaShapeProps) {
-  const { updateNodeData } = useReactFlow<SystemaFlowNode>()
+  const { updateNodeData } = useReactFlow<SystemaFlowNode>();
   const nodePosition = useStore(
     (state) => state.nodeLookup.get(id)?.internals.positionAbsolute,
-  )
-  const shapeRef = useRef<HTMLDivElement>(null)
-  const [isEditingName, setIsEditingName] = useState(false)
-  const [nameDraft, setNameDraft] = useState(data.name)
-  const [isEditingDescription, setIsEditingDescription] = useState(false)
-  const [descriptionDraft, setDescriptionDraft] = useState(data.description)
-  const cancelNameEdit = useRef(false)
-  const [palettePlacement, setPalettePlacement] = useState<"above" | "below">("above")
-  const [paletteAlignment, setPaletteAlignment] = useState<"center" | "left" | "right">("center")
-  const colorTextClass = nodeColorClasses[data.color].text
+  );
+  const shapeRef = useRef<HTMLDivElement>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(data.name);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState(data.description);
+  const cancelNameEdit = useRef(false);
+  const [palettePlacement, setPalettePlacement] = useState<"above" | "below">(
+    "above",
+  );
+  const [paletteAlignment, setPaletteAlignment] = useState<
+    "center" | "left" | "right"
+  >("center");
+  const colorTextClass = nodeColorClasses[data.color].text;
+  const others = useOthers();
+  const remoteSelectionColors = others
+    .filter((other) => other.presence.selection.nodeIds.includes(id))
+    .map((other) => other.info.color);
 
   const updatePalettePlacement = useCallback(() => {
-    if (!selected) return
+    if (!selected) return;
 
-    const shapeElement = shapeRef.current
-    const flowElement = shapeElement?.closest(".react-flow")
-    if (!shapeElement || !flowElement) return
+    const shapeElement = shapeRef.current;
+    const flowElement = shapeElement?.closest(".react-flow");
+    if (!shapeElement || !flowElement) return;
 
-    const shapeBounds = shapeElement.getBoundingClientRect()
-    const flowBounds = flowElement.getBoundingClientRect()
-    setPalettePlacement(shapeBounds.top - flowBounds.top < 52 ? "below" : "above")
-    const spaceToLeft = shapeBounds.left + shapeBounds.width / 2 - flowBounds.left
-    const spaceToRight = flowBounds.right - (shapeBounds.left + shapeBounds.width / 2)
+    const shapeBounds = shapeElement.getBoundingClientRect();
+    const flowBounds = flowElement.getBoundingClientRect();
+    setPalettePlacement(
+      shapeBounds.top - flowBounds.top < 52 ? "below" : "above",
+    );
+    const spaceToLeft =
+      shapeBounds.left + shapeBounds.width / 2 - flowBounds.left;
+    const spaceToRight =
+      flowBounds.right - (shapeBounds.left + shapeBounds.width / 2);
     setPaletteAlignment(
       spaceToLeft < 101 ? "left" : spaceToRight < 101 ? "right" : "center",
-    )
-  }, [selected])
+    );
+  }, [selected]);
 
-  useOnViewportChange({ onChange: updatePalettePlacement })
+  useOnViewportChange({ onChange: updatePalettePlacement });
 
   useLayoutEffect(() => {
-    if (!selected) return
+    if (!selected) return;
 
-    updatePalettePlacement()
-    window.addEventListener("resize", updatePalettePlacement)
-    return () => window.removeEventListener("resize", updatePalettePlacement)
-  }, [nodePosition?.x, nodePosition?.y, selected, updatePalettePlacement])
+    updatePalettePlacement();
+    window.addEventListener("resize", updatePalettePlacement);
+    return () => window.removeEventListener("resize", updatePalettePlacement);
+  }, [nodePosition?.x, nodePosition?.y, selected, updatePalettePlacement]);
 
   function startNameEdit(event: MouseEvent<HTMLDivElement>) {
-    event.preventDefault()
-    event.stopPropagation()
-    cancelNameEdit.current = false
-    setNameDraft(data.name)
-    setIsEditingName(true)
+    event.preventDefault();
+    event.stopPropagation();
+    cancelNameEdit.current = false;
+    setNameDraft(data.name);
+    setIsEditingName(true);
   }
 
   function saveName() {
     if (cancelNameEdit.current) {
-      cancelNameEdit.current = false
-      setNameDraft(data.name)
+      cancelNameEdit.current = false;
+      setNameDraft(data.name);
     } else {
-      updateNodeData(id, { name: nameDraft })
+      updateNodeData(id, { name: nameDraft });
     }
-    setIsEditingName(false)
+    setIsEditingName(false);
   }
 
   function saveDescription() {
-    updateNodeData(id, { description: descriptionDraft })
-    setIsEditingDescription(false)
+    updateNodeData(id, { description: descriptionDraft });
+    setIsEditingDescription(false);
   }
 
   return (
@@ -287,25 +322,25 @@ function SystemaShapeNode({
         id="top"
         type="source"
         position={Position.Top}
-        className="z-10 !h-2 !w-2 !border-2 !border-accent-primary !bg-bg-elevated"
+        className="z-10 h-2! w-2! border-2! border-accent-primary! bg-bg-elevated!"
       />
       <Handle
         id="right"
         type="source"
         position={Position.Right}
-        className="z-10 !h-2 !w-2 !border-2 !border-accent-primary !bg-bg-elevated"
+        className="z-10 h-2! w-2! border-2! border-accent-primary! bg-bg-elevated!"
       />
       <Handle
         id="bottom"
         type="source"
         position={Position.Bottom}
-        className="z-10 !h-2 !w-2 !border-2 !border-accent-primary !bg-bg-elevated"
+        className="z-10 h-2! w-2! border-2! border-accent-primary! bg-bg-elevated!"
       />
       <Handle
         id="left"
         type="source"
         position={Position.Left}
-        className="z-10 !h-2 !w-2 !border-2 !border-accent-primary !bg-bg-elevated"
+        className="z-10 h-2! w-2! border-2! border-accent-primary! bg-bg-elevated!"
       />
       <ShapeWrapper
         shape={shape}
@@ -313,6 +348,7 @@ function SystemaShapeNode({
         width={width}
         height={height}
         selected={selected}
+        remoteSelectionColors={remoteSelectionColors}
         rootRef={shapeRef}
         palette={
           selected && (
@@ -341,18 +377,18 @@ function SystemaShapeNode({
               onDoubleClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  event.preventDefault()
-                  event.currentTarget.blur()
+                  event.preventDefault();
+                  event.currentTarget.blur();
                 }
                 if (event.key === "Escape") {
-                  cancelNameEdit.current = true
-                  event.currentTarget.blur()
+                  cancelNameEdit.current = true;
+                  event.currentTarget.blur();
                 }
               }}
             />
           ) : (
             data.name && (
-              <span className="line-clamp-3 break-words">{data.name}</span>
+              <span className="line-clamp-3 wrap-break-words">{data.name}</span>
             )
           )}
         </div>
@@ -362,9 +398,9 @@ function SystemaShapeNode({
           title="Edit description"
           className="nodrag nopan absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-sm text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
           onClick={(event) => {
-            event.stopPropagation()
-            setDescriptionDraft(data.description)
-            setIsEditingDescription((editing) => !editing)
+            event.stopPropagation();
+            setDescriptionDraft(data.description);
+            setIsEditingDescription((editing) => !editing);
           }}
           onDoubleClick={(event) => event.stopPropagation()}
         >
@@ -381,35 +417,35 @@ function SystemaShapeNode({
             onClick={(event) => event.stopPropagation()}
             onDoubleClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => {
-              if (event.key === "Escape") event.currentTarget.blur()
+              if (event.key === "Escape") event.currentTarget.blur();
             }}
           />
         )}
       </ShapeWrapper>
     </>
-  )
+  );
 }
 
 export function RectangleNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="rectangle" />
+  return <SystemaShapeNode {...props} shape="rectangle" />;
 }
 
 export function DiamondNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="diamond" />
+  return <SystemaShapeNode {...props} shape="diamond" />;
 }
 
 export function CircleNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="circle" />
+  return <SystemaShapeNode {...props} shape="circle" />;
 }
 
 export function PillNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="pill" />
+  return <SystemaShapeNode {...props} shape="pill" />;
 }
 
 export function CylinderNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="cylinder" />
+  return <SystemaShapeNode {...props} shape="cylinder" />;
 }
 
 export function HexagonNode(props: SystemaNodeProps) {
-  return <SystemaShapeNode {...props} shape="hexagon" />
+  return <SystemaShapeNode {...props} shape="hexagon" />;
 }

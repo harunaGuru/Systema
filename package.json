@@ -11,7 +11,11 @@
   "dependencies": {
     "@clerk/nextjs": "^7.9.24",
     "@clerk/ui": "^1.42.3",
-    "@liveblocks/node": "^3.24.5",
+    "@liveblocks/client": "^3.25.0",
+    "@liveblocks/node": "^3.25.0",
+    "@liveblocks/react": "^3.25.0",
+    "@liveblocks/react-flow": "^3.25.0",
+    "@liveblocks/react-ui": "^3.25.0",
     "@next/env": "^16.4.3",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
@@ -33,6 +37,8 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.55",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

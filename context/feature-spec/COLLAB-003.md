@@ -18,24 +18,27 @@ The agent must do all of the following without asking the user for confirmation,
 4. Update `liveblocks.config.ts` per D.1 to support comment threads.
 5. Create the right sidebar container `components/editor/ai-sidebar.tsx` per D.2 (if it doesn't exist yet, create a basic shell with three tabs: Prompt, Comments, Spec).
 6. Integrate `@liveblocks/react-ui` comments into the "Comments" tab per D.3.
-7. Update `components/editor/editor-shell.tsx` to render the right sidebar (toggled from the navbar) per D.4.
-8. Update `components/editor/editor-navbar.tsx` to add the right sidebar toggle button per D.5.
-9. Run the **Checks** block in Section I top to bottom.
-10. Fix any in-scope failure and re-run the failing check.
-11. Report PASS or FAIL per Section J. On PASS, state the agent has stopped and is awaiting the next feature. On FAIL, state the exact blocker and stop.
+7. Update `app/editor/[projectid]/page.tsx` per D.4 to move the existing `LiveblocksRoom` around the entire `EditorShell`, leaving `Canvas` as its child.
+8. Update `components/editor/editor-shell.tsx` to render the right sidebar (toggled from the navbar) per D.5.
+9. Update `components/editor/editor-navbar.tsx` to add the right sidebar toggle button per D.6.
+10. Run the **Checks** block in Section I top to bottom.
+11. Fix any in-scope failure and re-run the failing check.
+12. Report PASS or FAIL per Section J. On PASS, state the agent has stopped and is awaiting the next feature. On FAIL, state the exact blocker and stop.
 
-Do not modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `AGENTS.md`, `lib/*`, `actions/*`, `components/editor/project-sidebar.tsx`, or `components/editor/canvas/*` (except if needed to add the sidebar toggle to the navbar).
+Do not modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `AGENTS.md`, `lib/*`, `actions/*`, `components/editor/project-sidebar.tsx`, or `components/editor/canvas/*` (except `canvas.tsx` if required to relocate the room wrapper; do not add a provider there).
 
 ## C. Context and Dependencies
 
 - **Prerequisites:** COLLAB-002 complete and verified.
 - **Contract introduced:** The right sidebar shell (`AiSidebar`) and the Comments tab.
-- **Contract consumed:** `LiveblocksRoom` (the comments must be inside the `RoomProvider`).
+- **Contract consumed:** The existing `LiveblocksRoom` and its `LiveblocksProvider`/`RoomProvider` (the project shell, canvas, and sidebar must share this single room context).
 - **Approved decisions:**
   - Liveblocks Comments is the engine. Do not build a custom comment database schema or API routes.
   - The right sidebar has three tabs: "Prompt", "Comments", and "Spec". Only "Comments" is functional in this unit; the others are placeholders.
-  - The `@liveblocks/react-ui` package provides pre-built, themed components. Use its default CSS import (`@liveblocks/react-ui/styles.css`) and apply the `dark` class to the container to match the app theme.
+  - The `@liveblocks/react-ui` package provides pre-built components. Import both `@liveblocks/react-ui/styles.css` and `@liveblocks/react-ui/styles/dark/attributes.css`, and apply the `dark` class to the container to match the app theme.
   - Comments are scoped to the room (`projectId`).
+  - On a project route, the existing `LiveblocksRoom` wraps the entire `EditorShell`, so both `Canvas` and `AiSidebar` are descendants of the same `RoomProvider`. Move the wrapper in `app/editor/[projectid]/page.tsx`; reuse it and do not add or nest another `LiveblocksProvider` or `RoomProvider`.
+  - The `/editor` home shell is outside a project room. Do not mount Liveblocks comment components there; show a non-Liveblocks placeholder in its Comments tab.
 
 ## D. Implementation Requirements
 
@@ -70,6 +73,7 @@ Inside the "Comments" tab, use the `@liveblocks/react-ui` components.
 
 Import the styles at the top of the component:
 `import "@liveblocks/react-ui/styles.css";`
+`import "@liveblocks/react-ui/styles/dark/attributes.css";`
 
 Render the Comments UI. If the package exports a single `<Comments />` component that handles both the list and the composer, use that. If it requires manual wiring, use the `Thread` and `Composer` components.
 
@@ -90,13 +94,26 @@ START OF ai-sidebar.tsx snippet
 
 END OF ai-sidebar.tsx snippet
 
-### 4. Update `components/editor/editor-shell.tsx`
+### 4. Update `app/editor/[projectid]/page.tsx` provider placement
+
+Move the existing `<LiveblocksRoom projectId={projectid}>` out from around the canvas and wrap the complete `<EditorShell>`:
+
+    <LiveblocksRoom projectId={projectid}>
+      <EditorShell ...>
+        <Canvas projectId={projectid} />
+      </EditorShell>
+    </LiveblocksRoom>
+
+This makes the room context available to the Comments tab in the shell's sidebar as well as to the canvas. Keep `/editor` outside a room and have the sidebar render its Comments placeholder there. Reuse the `LiveblocksRoom` component; do not add another `LiveblocksProvider` or `RoomProvider` in the page, shell, sidebar, or canvas.
+
+### 5. Update `components/editor/editor-shell.tsx`
 
 - Add state for the right sidebar: `const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false)`.
 - Render `<AiSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />`.
 - Pass `isRightSidebarOpen` and `onToggleRightSidebar` to `EditorNavbar`.
+- Ensure the Comments tab only mounts Liveblocks comment components when `currentProjectId` is present; otherwise show a room-unavailable placeholder. The project route places this shell under the existing `LiveblocksRoom`; `/editor` does not.
 
-### 5. Update `components/editor/editor-navbar.tsx`
+### 6. Update `components/editor/editor-navbar.tsx`
 
 - Accept `onToggleRightSidebar` as a prop.
 - Render a second toggle button on the right side of the navbar (e.g., using the `MessageSquare` icon from Lucide) to open the AI sidebar.
@@ -105,7 +122,7 @@ END OF ai-sidebar.tsx snippet
 ## E. Integration Contracts
 
 - **Contract introduced:** The `AiSidebar` component and the comments UI.
-- **Contract consumed:** `RoomProvider` context, `@liveblocks/react-ui`.
+- **Contract consumed:** The existing `RoomProvider` context shared by the project `EditorShell`, canvas, and sidebar; `@liveblocks/react-ui`.
 
 ## F. Scope Limits
 
@@ -113,7 +130,7 @@ Do not:
 
 - Build a custom comment database or API.
 - Add pinned comments (clicking on the canvas to leave a comment). That is a future enhancement; this unit is document-level comments in the sidebar.
-- Modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `AGENTS.md`, `lib/*`, `actions/*`, or `components/editor/canvas/*` (except for the navbar toggle).
+- Modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `AGENTS.md`, `lib/*`, `actions/*`, or `components/editor/canvas/*` (except for the navbar toggle and `canvas.tsx` changes required to preserve the single existing room wrapper).
 - Change the left sidebar behavior.
 
 ## G. Protected Behavior and Compatibility
@@ -130,8 +147,11 @@ Do not:
 4. The Comments tab shows a composer and allows posting a comment.
 5. Comments sync in real-time between two sessions.
 6. The comment UI is dark-themed and readable.
-7. All Checks pass.
-8. Agent reports PASS and stops.
+7. On `/editor/[projectid]`, one existing `LiveblocksRoom` wraps the entire `EditorShell`, making the same `RoomProvider` context available to the canvas and Comments sidebar.
+8. The home `/editor` route does not mount Liveblocks comment components without a room.
+9. No nested or duplicate Liveblocks providers are added.
+10. All Checks pass.
+11. Agent reports PASS and stops.
 
 ## I. Checks
 
@@ -145,13 +165,17 @@ Check 4 — Liveblocks UI integrated. Run `grep -c "@liveblocks/react-ui" compon
 
 Check 5 — Right sidebar wired. Run `grep -c "isRightSidebarOpen" components/editor/editor-shell.tsx`. Pass if count is at least 1.
 
-Check 6 — No hardcoded hex. Run `grep -cE "#[0-9a-fA-F]{3,8}" components/editor/ai-sidebar.tsx`. Pass if count is 0.
+Check 6 — Room context wraps sidebar. Inspect `app/editor/[projectid]/page.tsx`. Pass if the existing `<LiveblocksRoom>` wraps `<EditorShell>` and `<Canvas>` remains inside the shell. Confirm `LiveblocksRoom` is not nested inside the canvas and no additional provider was added.
 
-Check 7 — Build, typecheck, lint. Run `npm run build`, `npx tsc --noEmit`, `npm run lint`. If build fails with the Turbopack nvm shim issue, run `npx next build --webpack` and note the workaround.
+Check 7 — Home route without room. Confirm the `/editor` home shell does not mount Liveblocks comment components and its Comments tab shows the room-unavailable placeholder.
 
-Check 8 — Playwright Browser Test. If Playwright MCP is available, use it to navigate to the editor, open the right sidebar, click the Comments tab, and take a snapshot to confirm the composer is visible and dark-themed. If unavailable, report the limitation.
+Check 8 — No hardcoded hex. Run `grep -cE "#[0-9a-fA-F]{3,8}" components/editor/ai-sidebar.tsx`. Pass if count is 0.
 
-Check 9 — No out-of-scope packages. Run `npm ls @trigger.dev/sdk`. Pass if absent/empty.
+Check 9 — Build, typecheck, lint. Run `npm run build`, `npx tsc --noEmit`, `npm run lint`. If build fails with the Turbopack nvm shim issue, run `npx next build --webpack` and note the workaround.
+
+Check 10 — Playwright Browser Test. If Playwright MCP is available, use it to navigate to a project editor, open the right sidebar, click the Comments tab, and take a snapshot to confirm the composer is visible and dark-themed. Also navigate to `/editor` and confirm no room-dependent comments component errors. If unavailable, report the limitation.
+
+Check 11 — No out-of-scope packages. Run `npm ls @trigger.dev/sdk`. Pass if absent/empty.
 
 ## J. Report
 
@@ -161,6 +185,8 @@ If PASS, report:
 
 - One-line result per check.
 - Whether `@liveblocks/react-ui` provided a single `<Comments />` component or required manual `Thread`/`Composer` wiring.
+- Confirmation that the existing `LiveblocksRoom` wraps the project `EditorShell`, the sidebar and canvas share one `RoomProvider`, and no provider is nested or duplicated.
+- Confirmation that `/editor` does not mount room-dependent comments outside a project room.
 - Confirmation that the right sidebar opens and closes.
 - Confirmation that the comment composer renders in dark mode.
 - Note that manual two-session verification of real-time comment syncing is required by the user.

@@ -128,3 +128,8 @@ body {
   line-height: 1rem;
   color: var(--color-text-primary);
 }
+
+/* Keep Liveblocks' body-level emoji and menu portals above floating sidebars. */
+.lb-portal {
+  z-index: 60;
+}

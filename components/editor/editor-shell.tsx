@@ -36,7 +36,9 @@ export function EditorShell({
   const router = useRouter()
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [activeRightSidebar, setActiveRightSidebar] = useState<"ai" | "templates" | null>(null)
-  const isAiSidebarOpen = activeRightSidebar === "ai"
+  const [unreadCommentsCount, setUnreadCommentsCount] = useState(0)
+  const isRightSidebarOpen = activeRightSidebar === "ai"
+  const isAiSidebarOpen = isRightSidebarOpen
   const isTemplateSidebarOpen = activeRightSidebar === "templates"
   const [projectNameOverrides, setProjectNameOverrides] = useState<Record<string, string>>({})
   const [deletedProjectIds, setDeletedProjectIds] = useState<string[]>([])
@@ -131,6 +133,7 @@ export function EditorShell({
           }
           projectName={currentProjectName}
           isProjectPage={Boolean(currentProjectId)}
+          unreadCommentsCount={unreadCommentsCount}
         />
         <ProjectSidebar
           isOpen={isSidebarOpen}
@@ -145,6 +148,8 @@ export function EditorShell({
         <AiSidebar
           isOpen={isAiSidebarOpen}
           onClose={() => setActiveRightSidebar(null)}
+          currentProjectId={currentProjectId}
+          onUnreadCommentsChange={setUnreadCommentsCount}
         />
         {currentProjectId && (
           <TemplateSidebar

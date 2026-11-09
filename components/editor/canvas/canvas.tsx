@@ -6,23 +6,33 @@ import {
   useRef,
   type DragEvent,
 } from "react"
+import { LiveObject } from "@liveblocks/client"
+import { useMutation } from "@liveblocks/react"
 import {
-  addEdge,
+  Cursors,
+  useLiveblocksFlow,
+  type LiveblocksEdge,
+  type LiveblocksNode,
+} from "@liveblocks/react-flow"
+import {
   Background,
   ConnectionMode,
   Controls,
   MarkerType,
   ReactFlow,
-  useEdgesState,
-  useNodesState,
   type Connection,
   type Edge,
   type EdgeMarker,
   type Node,
+  type OnConnectEnd,
+  type OnConnectStart,
+  type OnNodeDrag,
+  type OnSelectionChangeFunc,
   type ReactFlowInstance,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { SystemaEdge, type SystemaEdgeData } from "./edge"
+import { PresenceCursor } from "./presence-cursor"
 import { ShapeToolbar } from "./shape-toolbar"
 import { starterTemplates } from "@/lib/templates"
 import { useTemplateImport } from "@/components/editor/template-import-context"
@@ -36,6 +46,7 @@ import {
   type ShapeType,
   type SystemaNodeData,
 } from "./shapes"
+import { useThrottledPresence } from "@/hooks/use-throttled-presence"
 
 type SystemaFlowNode = Node<SystemaNodeData, ShapeType>
 type SystemaFlowEdge = Edge<SystemaEdgeData>
@@ -63,29 +74,119 @@ export const nodeTypes = {
 
 export const edgeTypes = { default: SystemaEdge }
 
-export function Canvas() {
+function getClientPosition(event: MouseEvent | TouchEvent) {
+  if ("touches" in event) {
+    const touch = event.touches[0] ?? event.changedTouches[0]
+    return touch ? { x: touch.clientX, y: touch.clientY } : null
+  }
+
+  return { x: event.clientX, y: event.clientY }
+}
+
+function toLiveblocksNode(node: SystemaFlowNode): LiveblocksNode<SystemaFlowNode> {
+  return new LiveObject({
+    id: node.id,
+    type: node.type,
+    position: node.position,
+    width: node.width,
+    height: node.height,
+    data: new LiveObject(node.data),
+  })
+}
+
+function toLiveblocksEdge(edge: SystemaFlowEdge): LiveblocksEdge<SystemaFlowEdge> {
+  return new LiveObject({
+    id: edge.id,
+    type: edge.type,
+    source: edge.source,
+    target: edge.target,
+    ...(edge.sourceHandle !== undefined && { sourceHandle: edge.sourceHandle }),
+    ...(edge.targetHandle !== undefined && { targetHandle: edge.targetHandle }),
+    ...(edge.markerStart !== undefined && { markerStart: edge.markerStart }),
+    ...(edge.markerEnd !== undefined && { markerEnd: edge.markerEnd }),
+    data: new LiveObject(edge.data ?? { name: "", description: "" }),
+  })
+}
+
+export function Canvas({ projectId }: { projectId: string }) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const reactFlowRef = useRef<ReactFlowInstance<SystemaFlowNode, SystemaFlowEdge> | null>(null)
+  const lastCursorPosition = useRef<{ x: number; y: number } | null>(null)
+  const updatePresence = useThrottledPresence()
   const { registerTemplateImporter } = useTemplateImport()
-  const [nodes, setNodes, onNodesChange] = useNodesState<SystemaFlowNode>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<SystemaFlowEdge>([])
-  const onConnect = useCallback(
-    (params: Connection) =>
-      setEdges((currentEdges) =>
-        addEdge(
-          {
-            ...params,
-            type: "default",
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: "var(--color-border-default)",
-            } satisfies EdgeMarker,
-            data: { name: "", description: "" },
-          },
-          currentEdges,
-        ),
-      ),
-    [setEdges],
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+  } = useLiveblocksFlow<SystemaFlowNode, SystemaFlowEdge>({ suspense: true })
+  const broadcastCursor = useCallback((event: MouseEvent | TouchEvent) => {
+    const clientPosition = getClientPosition(event)
+    const cursor = clientPosition && reactFlowRef.current?.screenToFlowPosition(clientPosition)
+    if (!cursor) return
+
+    lastCursorPosition.current = cursor
+    updatePresence({ cursor })
+  }, [updatePresence])
+  const handleNodeDrag: OnNodeDrag<SystemaFlowNode> = useCallback((event, node) => {
+    broadcastCursor(event)
+    updatePresence({ selection: { nodeIds: [node.id], edgeIds: [] } })
+  }, [broadcastCursor, updatePresence])
+  const handleConnectStart: OnConnectStart = useCallback((event) => {
+    broadcastCursor(event)
+    updatePresence({ action: "connecting" })
+  }, [broadcastCursor, updatePresence])
+  const handleConnectEnd: OnConnectEnd = useCallback((event) => {
+    broadcastCursor(event)
+    updatePresence({ action: null })
+  }, [broadcastCursor, updatePresence])
+  const handleSelectionChange: OnSelectionChangeFunc<SystemaFlowNode, SystemaFlowEdge> = useCallback(
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
+      updatePresence({
+        selection: {
+          nodeIds: selectedNodes.map((node) => node.id),
+          edgeIds: selectedEdges.map((edge) => edge.id),
+        },
+      })
+    },
+    [updatePresence],
+  )
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      const connectedEdge = {
+        ...connection,
+        type: "default",
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "var(--color-border-default)",
+        } satisfies EdgeMarker,
+        data: { name: "", description: "" },
+      }
+      onConnect(connectedEdge)
+      updatePresence({
+        ...(lastCursorPosition.current && { cursor: lastCursorPosition.current }),
+        action: null,
+      })
+    },
+    [onConnect, updatePresence],
+  )
+  const addFlowElements = useMutation(
+    ({ storage }, elements: { nodes: SystemaFlowNode[]; edges: SystemaFlowEdge[] }) => {
+      const flow = storage.get("flow")
+      if (!flow) return
+
+      const nodeMap = flow.get("nodes")
+      const edgeMap = flow.get("edges")
+      for (const node of elements.nodes) {
+        nodeMap.set(node.id, toLiveblocksNode(node))
+      }
+      for (const edge of elements.edges) {
+        edgeMap.set(edge.id, toLiveblocksEdge(edge))
+      }
+    },
+    [],
   )
 
   const handleImportTemplate = useCallback((templateId: string) => {
@@ -142,14 +243,13 @@ export function Canvas() {
       } satisfies EdgeMarker,
     }))
 
-    setNodes((currentNodes) => [...currentNodes, ...importedNodes])
-    setEdges((currentEdges) => [...currentEdges, ...importedEdges])
+    addFlowElements({ nodes: importedNodes, edges: importedEdges })
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         void reactFlowRef.current?.fitView({ padding: 0.2, duration: 300 })
       })
     })
-  }, [nodes, setEdges, setNodes])
+  }, [addFlowElements, nodes])
 
   useEffect(
     () => registerTemplateImporter(handleImportTemplate),
@@ -157,16 +257,17 @@ export function Canvas() {
   )
 
   function addNodeAtPosition(type: ShapeType, position: { x: number; y: number }) {
-    setNodes((currentNodes) =>
-      currentNodes.concat({
+    addFlowElements({
+      nodes: [{
         id: crypto.randomUUID(),
         type,
         position,
         width: 180,
         height: 100,
         data: { name: "", description: "", color: "slate" },
-      }),
-    )
+      }],
+      edges: [],
+    })
   }
 
   function addShapeAtViewportCenter(type: ShapeType) {
@@ -182,6 +283,10 @@ export function Canvas() {
 
     addNodeAtPosition(type, position)
   }
+
+  const screenToFlowPosition = useCallback((position: { x: number; y: number }) => {
+    return reactFlowRef.current?.screenToFlowPosition(position) ?? null
+  }, [])
 
   function onDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
@@ -208,6 +313,7 @@ export function Canvas() {
   return (
     <div
       ref={wrapperRef}
+      data-project-id={projectId}
       className="relative h-full min-h-0 min-w-0 w-full bg-bg-canvas"
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -218,7 +324,12 @@ export function Canvas() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
+        onNodeDrag={handleNodeDrag}
+        onSelectionChange={handleSelectionChange}
+        onDelete={onDelete}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
@@ -237,8 +348,12 @@ export function Canvas() {
       >
         <Background gap={16} size={1} color="var(--color-border-subtle)" />
         <Controls />
+        <Cursors components={{ Cursor: PresenceCursor }} />
       </ReactFlow>
-      <ShapeToolbar onAddShape={addShapeAtViewportCenter} />
+      <ShapeToolbar
+        onAddShape={addShapeAtViewportCenter}
+        screenToFlowPosition={screenToFlowPosition}
+      />
     </div>
   )
 }

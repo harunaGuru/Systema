@@ -13,6 +13,7 @@ import {
 import { Show, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { NavbarPresence } from "@/components/editor/navbar-presence";
 
 type EditorNavbarProps = {
   isSidebarOpen: boolean;
@@ -23,6 +24,7 @@ type EditorNavbarProps = {
   onToggleTemplateSidebar: () => void;
   projectName?: string;
   isProjectPage?: boolean;
+  unreadCommentsCount?: number;
 };
 
 const outlineActionClassName =
@@ -37,6 +39,7 @@ export function EditorNavbar({
   onToggleTemplateSidebar,
   projectName,
   isProjectPage = false,
+  unreadCommentsCount = 0,
 }: EditorNavbarProps) {
   return (
     <header className="grid h-14 shrink-0 grid-cols-3 items-center border-b border-border-default bg-bg-base/80 px-4 backdrop-blur-md">
@@ -67,8 +70,9 @@ export function EditorNavbar({
             <PanelLeftOpen className="h-5 w-5" />
           )}
         </Button>
+        {isProjectPage && <NavbarPresence />}
       </div>
-      <div className="min-w-0 px-3 text-center">
+      <div className="flex min-w-0 items-center justify-center gap-3 px-3 text-center">
         {projectName && (
           <span className="block truncate text-sm font-medium text-text-primary">
             {projectName}
@@ -126,9 +130,17 @@ export function EditorNavbar({
           aria-expanded={isAiSidebarOpen}
           aria-controls="ai-sidebar"
           onClick={onToggleAiSidebar}
-          className="h-10 w-10 rounded-md bg-node-violet text-node-violet-text transition-all hover:-translate-y-0.5 hover:bg-node-violet/90 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
+          className="relative h-10 w-10 rounded-md bg-node-violet text-node-violet-text transition-all hover:-translate-y-0.5 hover:bg-node-violet/90 hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2"
         >
           <Sparkles className="h-5 w-5" />
+          {unreadCommentsCount > 0 && (
+            <span
+              aria-label={`${unreadCommentsCount} unread comments`}
+              className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-bg-base bg-state-error px-1 text-[10px] font-semibold leading-none text-text-primary"
+            >
+              {unreadCommentsCount > 99 ? "99+" : unreadCommentsCount}
+            </span>
+          )}
         </Button>
         <Show when="signed-in">
           <UserButton />

@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { notFound, redirect } from 'next/navigation'
 import { Canvas } from '@/components/editor/canvas/canvas'
+import { LiveblocksRoom } from '@/components/editor/canvas/liveblocks-room'
 import { EditorShell } from '@/components/editor/editor-shell'
 import { AccessError, requireProjectAccess } from '@/lib/server/auth'
 import { listOwnedProjects, listSharedProjects } from '@/lib/server/projects'
@@ -59,13 +60,15 @@ async function AuthorizedProject({
   if (!currentProject) notFound()
 
   return (
-    <EditorShell
-      ownedProjects={ownedProjects}
-      sharedProjects={sharedProjects}
-      currentProjectId={projectid}
-      currentProjectName={currentProject.name}
-    >
-      <Canvas />
-    </EditorShell>
+    <LiveblocksRoom projectId={projectid}>
+      <EditorShell
+        ownedProjects={ownedProjects}
+        sharedProjects={sharedProjects}
+        currentProjectId={projectid}
+        currentProjectName={currentProject.name}
+      >
+        <Canvas projectId={projectid} />
+      </EditorShell>
+    </LiveblocksRoom>
   )
 }

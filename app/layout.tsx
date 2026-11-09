@@ -1,6 +1,8 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/ui/themes";
 import type { Metadata } from "next";
+import "@liveblocks/react-flow/styles.css";
+import "@liveblocks/react-ui/styles.css";
 import "./globals.css";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";

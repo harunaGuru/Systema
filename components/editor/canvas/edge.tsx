@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { shallow, useOthers } from "@liveblocks/react";
 import { Plus } from "lucide-react";
 import {
   BaseEdge,
@@ -31,6 +32,13 @@ export function SystemaEdge({
   selected,
 }: EdgeProps<SystemaEdgeType>) {
   const { updateEdgeData, setEdges, setNodes } = useReactFlow();
+  const remoteSelections = useOthers(
+    (others) =>
+      others
+        .filter((other) => other.presence.selection.edgeIds.includes(id))
+        .map(({ connectionId, info }) => ({ connectionId, color: info.color })),
+    shallow,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(data?.name ?? "");
@@ -43,6 +51,7 @@ export function SystemaEdge({
     targetPosition,
   });
   const hasName = Boolean(data?.name);
+  const remoteSelection = remoteSelections[0];
 
   useEffect(() => {
     if (!isEditing) return;
@@ -89,6 +98,18 @@ export function SystemaEdge({
           strokeWidth: 2.5,
         }}
       />
+      {remoteSelection && (
+        <BaseEdge
+          path={edgePath}
+          interactionWidth={0}
+          style={{
+            stroke: remoteSelection.color,
+            strokeWidth: 6,
+            opacity: 0.75,
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <EdgeLabelRenderer>
         <div
           className={`nodrag nopan absolute flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated px-2 py-1 font-mono text-xs text-text-primary ${

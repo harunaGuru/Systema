@@ -1,5 +1,7 @@
 ﻿import { Liveblocks } from '@liveblocks/node'
+import { clerkClient } from '@clerk/nextjs/server'
 import { AccessError, requireProjectAccess } from '@/lib/server/auth'
+import { liveblocksUserColor } from '@/lib/liveblocks-user-color'
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -25,8 +27,11 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const { userId } = await requireProjectAccess(room)
+    const clerk = await clerkClient()
+    const user = await clerk.users.getUser(userId)
+    const displayName = user.firstName?.trim() || 'Collaborator'
     const session = liveblocks.prepareSession(userId, {
-      userInfo: { name: userId },
+      userInfo: { name: displayName, color: liveblocksUserColor(userId) },
     })
 
     session.allow(room, session.FULL_ACCESS)
