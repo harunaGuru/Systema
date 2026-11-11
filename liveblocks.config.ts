@@ -15,6 +15,8 @@ declare global {
       cursor: { x: number; y: number } | null
       action: "typing" | "connecting" | null
       selection: { nodeIds: string[]; edgeIds: string[] }
+      aiJobRunning: boolean
+      aiJobUser: string | null
     }
     Storage: {
       flow?: LiveblocksFlow<SystemaFlowNode, SystemaFlowEdge>
@@ -24,6 +26,7 @@ declare global {
       info: { name: string; color: string }
     }
     ThreadMetadata: Record<string, never>
+    RoomEvent: { type: "COLLABORATOR_REMOVED"; userId: string }
   }
 }
 

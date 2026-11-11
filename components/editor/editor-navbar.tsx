@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Link2,
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
@@ -14,6 +13,7 @@ import { Show, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NavbarPresence } from "@/components/editor/navbar-presence";
+import { CollaboratorDialog } from "@/components/editor/collaborator-dialog";
 
 type EditorNavbarProps = {
   isSidebarOpen: boolean;
@@ -24,6 +24,8 @@ type EditorNavbarProps = {
   onToggleTemplateSidebar: () => void;
   projectName?: string;
   isProjectPage?: boolean;
+  projectId?: string;
+  isOwner?: boolean;
   unreadCommentsCount?: number;
 };
 
@@ -39,6 +41,8 @@ export function EditorNavbar({
   onToggleTemplateSidebar,
   projectName,
   isProjectPage = false,
+  projectId,
+  isOwner = false,
   unreadCommentsCount = 0,
 }: EditorNavbarProps) {
   return (
@@ -113,15 +117,9 @@ export function EditorNavbar({
             Load Template
           </Button>
         )}
-        <Button
-          type="button"
-          className="h-10 rounded-md border-0 bg-accent-ai px-4 text-bg-base transition-all enabled:hover:-translate-y-0.5 enabled:hover:bg-accent-ai/90 enabled:hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2 disabled:pointer-events-auto! disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-accent-ai disabled:hover:text-bg-base"
-          disabled
-          aria-label="Share"
-        >
-          <Link2 className="h-4 w-4" />
-          Share
-        </Button>
+        {isProjectPage && projectId && isOwner && (
+          <CollaboratorDialog projectId={projectId} isOwner={isOwner} />
+        )}
         <Button
           type="button"
           size="icon"

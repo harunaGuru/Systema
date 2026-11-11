@@ -1,9 +1,10 @@
 "use client"
 
-import { LiveblocksProvider, RoomProvider } from "@liveblocks/react"
+import { LiveblocksProvider, RoomProvider, useSelf } from "@liveblocks/react"
 import type { ResolveUsersArgs } from "@liveblocks/client"
-import { ClientSideSuspense } from "@liveblocks/react/suspense"
+import { ClientSideSuspense, useErrorListener, useEventListener } from "@liveblocks/react/suspense"
 import { useCallback, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { z } from "zod"
 import { useThrottledPresence } from "@/hooks/use-throttled-presence"
 
@@ -36,6 +37,33 @@ function PresenceInputTracker() {
       document.removeEventListener("focusout", onFocusOut)
     }
   }, [updatePresence])
+
+  return null
+}
+
+function RemovedUserRedirect({ projectId }: { projectId: string }) {
+  const router = useRouter()
+  const self = useSelf()
+
+  useEventListener(({ event }) => {
+    if (
+      event.type === "COLLABORATOR_REMOVED" &&
+      event.userId === self?.id
+    ) {
+      window.alert("You have been removed from this project.")
+      router.push("/editor")
+    }
+  })
+
+  useErrorListener((error) => {
+    if (
+      error.context.type === "ROOM_CONNECTION_ERROR" &&
+      error.context.roomId === projectId &&
+      error.context.code === 4001
+    ) {
+      router.push("/editor")
+    }
+  })
 
   return null
 }
@@ -74,8 +102,11 @@ export function LiveblocksRoom({
           cursor: null,
           action: null,
           selection: { nodeIds: [], edgeIds: [] },
+          aiJobRunning: false,
+          aiJobUser: null,
         }}
       >
+        <RemovedUserRedirect projectId={projectId} />
         <PresenceInputTracker />
         <ClientSideSuspense
           fallback={

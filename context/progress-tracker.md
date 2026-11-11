@@ -1,4 +1,4 @@
-﻿# Progress Tracker
+# Progress Tracker
 
 Update this file after every meaningful implementation change.
 
@@ -7,10 +7,6 @@ Update this file after every meaningful implementation change.
 - **Foundation.** UI-001, UI-002, and UI-003 are complete and verified.
 
 ## Current Goal
-
-- **Collaboration presence and comment feedback improvements. Implementation complete; manual UI verification pending.** Remote selected edges now receive a thicker stroke in the selecting collaborator's color, using existing `selection.edgeIds` presence. The AI sidebar tracks unread comments after each user's per-project local last-read timestamp, excluding the current user's comments; selecting or opening the Comments tab clears the count. A numbered badge is shown on the navbar AI toggle while unread comments exist. The editor/canvas height and native `onDragOver`/`onDrop` handlers were not changed. As requested, no browser automation was run. `npm run lint`, `npx tsc --noEmit`, and `npx next build --webpack` passed. Manual browser verification remains with the user.
-
-- **AI-001–AI-003 review updates. Done (specification review only).** Clarified safe local Trigger.dev secret setup and dashboard-only database environment configuration; updated the graph-generation spec for the Groq model ID, Zod 4 defaults, shared schema guidance, per-provider validation and graph identity/endpoint constraints; updated the sidebar spec to send the current graph, append remapped additions only, and use run-scoped status authorization. AI runtime files are absent and no Trigger.dev dashboard access was available, so deployment-variable presence and SDK token behavior remain verification requirements for those feature units. No secret values were accessed or disclosed. `git diff --check` passed.
 
 - **Comments and navbar presence polish. Done and verified.** Raised the AI sidebar to `z-50` and Liveblocks body portals to `z-index: 60`, keeping the emoji picker and three-dot menu above the sidebar. Navbar presence now uses `useOthers()` data to render up to three named/colorized avatars and a portaled overflow popover listing all collaborators; the stack is positioned beside the left navbar controls so it does not overlap the action buttons. Shape toolbar native drag events broadcast screen-to-flow cursor coordinates at most every 50 ms and clear the presence cursor on drag end; the canvas wrapper's height and native `onDragOver`/`onDrop` handlers were left intact. Authenticated Playwright with `setupClerkTestingToken()` passed using five temporary Clerk users: three avatars displayed, the `+1` popover listed all four other collaborators, and both the emoji picker and comments menu had z-index 60 above the sidebar at z-index 50 and were hit-testable. `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `git diff --check` passed. The temporary test fixture and its project, room, and users were removed.
 

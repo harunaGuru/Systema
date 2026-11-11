@@ -23,6 +23,7 @@ type EditorShellProps = {
   sharedProjects?: Array<{ id: string; name: string }>
   currentProjectId?: string
   currentProjectName?: string
+  isOwner?: boolean
 }
 
 export function EditorShell({
@@ -32,6 +33,7 @@ export function EditorShell({
   sharedProjects = [],
   currentProjectId,
   currentProjectName: initialProjectName,
+  isOwner = false,
 }: EditorShellProps) {
   const router = useRouter()
   const [isSidebarOpen, setSidebarOpen] = useState(false)
@@ -133,6 +135,8 @@ export function EditorShell({
           }
           projectName={currentProjectName}
           isProjectPage={Boolean(currentProjectId)}
+          projectId={currentProjectId}
+          isOwner={isOwner}
           unreadCommentsCount={unreadCommentsCount}
         />
         <ProjectSidebar

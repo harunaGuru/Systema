@@ -1,9 +1,13 @@
-﻿'use server'
+'use server'
 
 import { clerkClient } from '@clerk/nextjs/server'
+import { revalidatePath } from 'next/cache'
+import { Liveblocks } from '@liveblocks/node'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { AccessError, requireProjectAccess } from '@/lib/server/auth'
+
+const liveblocks = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET_KEY! })
 
 const addCollaboratorSchema = z.object({
   projectId: z.string().min(1),
@@ -85,6 +89,7 @@ export async function addCollaborator(
     },
   })
 
+  revalidatePath('/editor')
   return { ok: true }
 }
 
@@ -130,5 +135,10 @@ export async function removeCollaborator(
     throw error
   }
 
+  await liveblocks.broadcastEvent(input.data.projectId, {
+    type: 'COLLABORATOR_REMOVED',
+    userId: input.data.userId,
+  })
+  revalidatePath('/editor')
   return { ok: true }
 }

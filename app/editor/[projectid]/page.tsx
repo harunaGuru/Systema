@@ -36,8 +36,9 @@ async function AuthorizedProject({
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
+  let isOwner = false
   try {
-    await requireProjectAccess(projectid)
+    isOwner = (await requireProjectAccess(projectid)).role === 'owner'
   } catch (error) {
     if (
       error instanceof AccessError &&
@@ -66,6 +67,7 @@ async function AuthorizedProject({
         sharedProjects={sharedProjects}
         currentProjectId={projectid}
         currentProjectName={currentProject.name}
+        isOwner={isOwner}
       >
         <Canvas projectId={projectid} />
       </EditorShell>

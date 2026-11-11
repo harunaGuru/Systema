@@ -2,6 +2,7 @@ import { EditorShell } from "@/components/editor/editor-shell"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { listOwnedProjects, listSharedProjects } from "@/lib/server/projects"
+import { DashboardRefresh } from "@/components/editor/dashboard-refresh"
 
 export default async function EditorPage() {
   const { userId } = await auth()
@@ -12,5 +13,10 @@ export default async function EditorPage() {
     listSharedProjects(userId),
   ])
 
-  return <EditorShell ownedProjects={ownedProjects} sharedProjects={sharedProjects} />
+  return (
+    <>
+      <DashboardRefresh />
+      <EditorShell ownedProjects={ownedProjects} sharedProjects={sharedProjects} />
+    </>
+  )
 }
