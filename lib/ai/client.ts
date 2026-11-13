@@ -8,6 +8,7 @@ import {
 
 const geminiModel = "gemini-3.8-flash"
 const groqModel = "openai/gpt-oss-120b"
+const aiRequestTimeoutMs = 120_000
 
 function getApiKey(name: "GEMINI_API_KEY" | "GROQ_API_KEY"): string {
   const apiKey = process.env[name]
@@ -27,13 +28,13 @@ export async function generateWithGemini(systemPrompt: string): Promise<SystemaG
   const model = client.getGenerativeModel({
     model: geminiModel,
     generationConfig: { responseMimeType: "application/json" },
-  })
+  }, { timeout: aiRequestTimeoutMs })
   const result = await model.generateContent(systemPrompt)
   return parseGraphResponse(result.response.text())
 }
 
 export async function generateWithGroq(systemPrompt: string): Promise<SystemaGraph> {
-  const client = new Groq({ apiKey: getApiKey("GROQ_API_KEY") })
+  const client = new Groq({ apiKey: getApiKey("GROQ_API_KEY"), timeout: aiRequestTimeoutMs })
   const completion = await client.chat.completions.create({
     model: groqModel,
     messages: [{ role: "system", content: systemPrompt }],
@@ -44,6 +45,41 @@ export async function generateWithGroq(systemPrompt: string): Promise<SystemaGra
     throw new Error("Groq returned an empty graph response")
   }
   return parseGraphResponse(content)
+}
+
+export async function generateMarkdown(systemPrompt: string): Promise<string> {
+  try {
+    const client = new GoogleGenerativeAI(getApiKey("GEMINI_API_KEY"))
+    const model = client.getGenerativeModel({ model: geminiModel }, { timeout: aiRequestTimeoutMs })
+    const result = await model.generateContent(systemPrompt)
+    const markdown = result.response.text()
+    if (!markdown.trim()) {
+      throw new Error("Gemini returned an empty Markdown response")
+    }
+    return markdown
+  } catch (geminiError) {
+    try {
+      const client = new Groq({
+        apiKey: getApiKey("GROQ_API_KEY"),
+        timeout: aiRequestTimeoutMs,
+        maxRetries: 0,
+      })
+      const completion = await client.chat.completions.create({
+        model: groqModel,
+        messages: [{ role: "system", content: systemPrompt }],
+      })
+      const markdown = completion.choices[0]?.message.content
+      if (!markdown?.trim()) {
+        throw new Error("Groq returned an empty Markdown response")
+      }
+      return markdown
+    } catch (groqError) {
+      throw new AggregateError(
+        [geminiError, groqError],
+        "Markdown generation failed with Gemini and its Groq fallback",
+      )
+    }
+  }
 }
 
 export async function generateGraph(

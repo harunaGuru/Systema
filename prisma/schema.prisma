@@ -8,15 +8,15 @@ datasource db {
 }
 
 model Project {
-  id            String           @id
-  name          String
-  ownerId       String
-  snapshotSequence Int             @default(0)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  collaborators Collaborator[]
-  snapshots     CanvasSnapshot[]
-  artifacts     Artifact[]
+  id               String           @id
+  name             String
+  ownerId          String
+  snapshotSequence Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  collaborators    Collaborator[]
+  snapshots        CanvasSnapshot[]
+  artifacts        Artifact[]
 }
 
 model Collaborator {
@@ -36,17 +36,17 @@ enum CollaboratorRole {
 }
 
 model CanvasSnapshot {
-  id        String   @id @default(cuid())
-  projectId String
-  blobPath  String
-  sequence  Int
-  contentHash String?
-  prunePending Boolean @default(false)
-  createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  projectId    String
+  blobPath     String
+  sequence     Int
+  contentHash  String?
+  prunePending Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([projectId])
   @@unique([projectId, sequence])
+  @@index([projectId])
 }
 
 model Artifact {
@@ -54,6 +54,7 @@ model Artifact {
   projectId String
   type      ArtifactType
   blobPath  String
+  runId     String?      @unique
   createdAt DateTime     @default(now())
   project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 

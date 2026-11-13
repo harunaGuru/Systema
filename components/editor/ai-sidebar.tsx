@@ -3,20 +3,23 @@
 import "@liveblocks/react-ui/styles.css"
 import "@liveblocks/react-ui/styles/dark/attributes.css"
 import { Thread, Composer } from "@liveblocks/react-ui"
-import { LiveObject } from "@liveblocks/client"
+import { LiveObject, stringifyCommentBody } from "@liveblocks/client"
 import { ClientSideSuspense, useSelf, useThreads } from "@liveblocks/react/suspense"
 import { shallow, useMutation, useOthers, useUpdateMyPresence } from "@liveblocks/react"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
-import { AlertCircle, CheckCircle2, Loader2, Sparkles, X } from "lucide-react"
+import { AlertCircle, CheckCircle2, Download, FileText, Loader2, Sparkles, X } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { z } from "zod"
-import type { RealtimeRun } from "@trigger.dev/core/v3"
+import { useRealtimeRun } from "@trigger.dev/react-hooks"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { SystemaGraphSchema, type SystemaGraph } from "@/lib/ai/schema"
 import type { generateGraphTask } from "@/trigger/generate-graph"
-import { useRealtimeRun } from "@trigger.dev/react-hooks"
+import type { generateSpecTask } from "@/trigger/generate-spec"
 import type { Edge, Node } from "@xyflow/react"
 import type { SystemaEdgeData } from "@/components/editor/canvas/edge"
 import type { ShapeType, SystemaNodeData } from "@/components/editor/canvas/shapes"
@@ -26,6 +29,9 @@ const GenerateResponseSchema = z.object({
   runId: z.string().min(1),
   accessToken: z.string().min(1),
 })
+const LatestSpecResponseSchema = z.object({ artifactId: z.string().min(1).nullable() })
+
+type SpecStatus = "loading" | "idle" | "generating" | "success" | "error"
 
 type SystemaFlowNode = Node<SystemaNodeData, ShapeType>
 type SystemaFlowEdge = Edge<SystemaEdgeData>
@@ -89,7 +95,11 @@ function PromptTab({ projectId }: { projectId: string }) {
     }
   }, [])
 
-  const handleRunComplete = useCallback((completedRun: RealtimeRun<typeof generateGraphTask>, error?: Error) => {
+  const handleRunComplete = useCallback((completedRun: {
+    status: string
+    error?: { message?: string }
+    output?: unknown
+  }, error?: Error) => {
     if (!runId || appliedRunId.current === runId) return
     if (error) {
       setErrorMessage(error.message)
@@ -225,6 +235,302 @@ function PromptTab({ projectId }: { projectId: string }) {
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </p>
+      )}
+    </div>
+  )
+}
+
+function SpecTab({ projectId }: { projectId: string }) {
+  const threadState = useThreads()
+  const { threads, hasFetchedAll, fetchMore, isFetchingMore, fetchMoreError } = threadState
+  const threadStateRef = useRef({ threads, hasFetchedAll, fetchMore, isFetchingMore, fetchMoreError })
+  const threadLoadWaitersRef = useRef<Array<() => void>>([])
+  const [specStatus, setSpecStatus] = useState<SpecStatus>("loading")
+  const [markdown, setMarkdown] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
+  const [runId, setRunId] = useState<string>()
+  const [accessToken, setAccessToken] = useState<string>()
+  const [artifactId, setArtifactId] = useState<string>()
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const activePollRef = useRef(false)
+  const { run, error: realtimeError } = useRealtimeRun<typeof generateSpecTask>(runId, {
+    accessToken,
+    enabled: Boolean(runId && accessToken),
+    skipColumns: ["payload", "output"],
+  })
+
+  useEffect(() => {
+    threadStateRef.current = { threads, hasFetchedAll, fetchMore, isFetchingMore, fetchMoreError }
+    const waiters = threadLoadWaitersRef.current
+    threadLoadWaitersRef.current = []
+    waiters.forEach((resolve) => resolve())
+  }, [fetchMore, fetchMoreError, hasFetchedAll, isFetchingMore, threads])
+
+  async function loadAllThreads() {
+    while (true) {
+      const current = threadStateRef.current
+      if (current.fetchMoreError) {
+        throw new Error("Unable to load all comments for specification generation.", {
+          cause: current.fetchMoreError,
+        })
+      }
+      if (current.hasFetchedAll) return current.threads
+
+      await new Promise<void>((resolve) => {
+        threadLoadWaitersRef.current.push(resolve)
+        if (!current.isFetchingMore) current.fetchMore()
+      })
+    }
+  }
+
+  useEffect(() => {
+    let disposed = false
+
+    async function loadLatestSpec() {
+      try {
+        const lookupResponse = await fetch(
+          `/api/projects/${encodeURIComponent(projectId)}/specs/latest`,
+        )
+        const lookupBody: unknown = await lookupResponse.json()
+        if (!lookupResponse.ok) {
+          const parsedError = z.object({ error: z.string() }).safeParse(lookupBody)
+          throw new Error(parsedError.success ? parsedError.data.error : "Unable to check saved specification.")
+        }
+
+        const lookup = LatestSpecResponseSchema.safeParse(lookupBody)
+        if (!lookup.success) throw new Error("The specification lookup returned an invalid response.")
+        if (disposed) return
+        if (!lookup.data.artifactId) {
+          setSpecStatus("idle")
+          return
+        }
+
+        const readResponse = await fetch(
+          `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(lookup.data.artifactId)}`,
+        )
+        if (!readResponse.ok) throw new Error("Unable to load the saved specification.")
+        const content = await readResponse.text()
+        if (disposed) return
+        setArtifactId(lookup.data.artifactId)
+        setMarkdown(content)
+        setSpecStatus("success")
+      } catch (error) {
+        if (!disposed) {
+          setErrorMsg(error instanceof Error ? error.message : "Unable to load the saved specification.")
+          setSpecStatus("error")
+        }
+      }
+    }
+
+    void loadLatestSpec()
+    return () => {
+      disposed = true
+    }
+  }, [projectId])
+
+  async function handleGenerate() {
+    setSpecStatus("generating")
+    setErrorMsg("")
+    setMarkdown("")
+    setArtifactId(undefined)
+    setRunId(undefined)
+    setAccessToken(undefined)
+
+    try {
+      const threads = await loadAllThreads()
+      const comments = await Promise.all(
+        threads.flatMap((thread) =>
+          thread.comments
+            .filter((comment) => !comment.deletedAt)
+            .map((comment) => stringifyCommentBody(comment.body, { format: "plain" })),
+        ),
+      )
+      const response = await fetch("/api/ai/spec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, comments: comments.map((comment) => comment.trim()).filter(Boolean) }),
+      })
+      const responseBody: unknown = await response.json()
+      if (!response.ok) {
+        const parsedError = z.object({ error: z.string() }).safeParse(responseBody)
+        throw new Error(parsedError.success ? parsedError.data.error : "Unable to start specification generation.")
+      }
+
+      const result = GenerateResponseSchema.safeParse(responseBody)
+      if (!result.success) throw new Error("The specification service returned an invalid response.")
+      setRunId(result.data.runId)
+      setAccessToken(result.data.accessToken)
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : "Unable to start specification generation.")
+      setSpecStatus("error")
+    }
+  }
+
+  useEffect(() => {
+    if (!runId || specStatus !== "generating") return
+
+    const currentRunId = runId
+    let disposed = false
+    async function pollForArtifact() {
+      if (disposed || activePollRef.current) return
+      if (realtimeError) {
+        setErrorMsg(realtimeError.message)
+        setSpecStatus("error")
+        return
+      }
+      if (run && failedRunStatuses.includes(run.status)) {
+        setErrorMsg(run.error?.message ?? "Specification generation failed.")
+        setSpecStatus("error")
+        return
+      }
+
+      activePollRef.current = true
+      try {
+        const lookupResponse = await fetch(
+          `/api/projects/${encodeURIComponent(projectId)}/specs/latest?runId=${encodeURIComponent(currentRunId)}`,
+        )
+        const lookupBody: unknown = await lookupResponse.json()
+        if (!lookupResponse.ok) {
+          const parsedError = z.object({ error: z.string() }).safeParse(lookupBody)
+          throw new Error(parsedError.success ? parsedError.data.error : "Unable to check specification status.")
+        }
+
+        const lookup = LatestSpecResponseSchema.safeParse(lookupBody)
+        if (!lookup.success) throw new Error("The specification lookup returned an invalid response.")
+        if (disposed) return
+
+        if (!lookup.data.artifactId) {
+          if (run?.status === "COMPLETED") {
+            setErrorMsg("The run completed without creating a specification artifact.")
+            setSpecStatus("error")
+          }
+          return
+        }
+
+        const readResponse = await fetch(
+          `/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(lookup.data.artifactId)}`,
+        )
+        if (!readResponse.ok) throw new Error("Unable to load the generated specification.")
+        const content = await readResponse.text()
+        if (disposed) return
+        setArtifactId(lookup.data.artifactId)
+        setMarkdown(content)
+        setSpecStatus("success")
+      } catch (error) {
+        if (!disposed) {
+          setErrorMsg(error instanceof Error ? error.message : "Unable to load the generated specification.")
+          setSpecStatus("error")
+        }
+      } finally {
+        activePollRef.current = false
+      }
+    }
+
+    void pollForArtifact()
+    const intervalId = window.setInterval(() => void pollForArtifact(), 3000)
+    return () => {
+      disposed = true
+      window.clearInterval(intervalId)
+    }
+  }, [projectId, realtimeError, run, runId, specStatus])
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 rounded-md bg-bg-surface p-4">
+      {specStatus === "loading" && (
+        <div role="status" className="flex items-center gap-2 rounded-md border border-border-subtle bg-bg-base p-3 text-sm text-text-muted">
+          <Loader2 className="h-4 w-4 animate-spin text-accent-ai" />
+          <span>Loading saved specification...</span>
+        </div>
+      )}
+      {specStatus === "idle" && (
+        <Button
+          type="button"
+          onClick={handleGenerate}
+          className="w-full bg-accent-primary text-text-primary hover:bg-accent-primary/90"
+        >
+          Generate Specification
+        </Button>
+      )}
+      {specStatus === "generating" && (
+        <div role="status" className="flex items-center gap-2 rounded-md border border-border-subtle bg-bg-base p-3 text-sm text-text-muted">
+          <Loader2 className="h-4 w-4 animate-spin text-accent-ai" />
+          <span>Analyzing canvas and comments...</span>
+        </div>
+      )}
+      {specStatus === "error" && (
+        <div className="flex flex-col gap-3">
+          <p role="alert" className="flex items-start gap-2 rounded-md border border-border-subtle bg-bg-base p-3 text-sm text-state-error">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </p>
+          <Button
+            type="button"
+            onClick={handleGenerate}
+            className="w-full bg-accent-primary text-text-primary hover:bg-accent-primary/90"
+          >
+            Try Again
+          </Button>
+        </div>
+      )}
+      {specStatus === "success" && artifactId && (
+        <>
+          <div className="relative flex items-center gap-3 rounded-md border border-border-default bg-bg-base p-3 transition-colors hover:bg-bg-elevated">
+            <button
+              type="button"
+              aria-label="Preview Technical Specification.md"
+              onClick={() => setPreviewOpen(true)}
+              className="absolute inset-0 z-0 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+            />
+            <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-center gap-3">
+              <FileText className="h-5 w-5 shrink-0 text-accent-ai" />
+              <span className="truncate text-sm font-medium text-text-primary">Technical Specification.md</span>
+            </div>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="relative z-20 shrink-0 text-text-muted hover:text-text-primary"
+            >
+              <a
+                href={`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(artifactId)}?download=true`}
+                aria-label="Download Technical Specification.md"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+          <Button
+            type="button"
+            onClick={handleGenerate}
+            className="w-full bg-accent-primary text-text-primary hover:bg-accent-primary/90"
+          >
+            Generate Again
+          </Button>
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogContent className="flex h-5/6 w-full max-w-4xl flex-col gap-4 overflow-hidden sm:max-w-4xl">
+              <DialogHeader className="shrink-0">
+                <DialogTitle>Technical Specification.md</DialogTitle>
+                <DialogDescription>Preview the generated technical specification.</DialogDescription>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-md bg-bg-base p-4">
+                <div className="prose prose-invert prose-sm max-w-none text-text-primary">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+                </div>
+              </div>
+              <DialogFooter className="shrink-0">
+                <Button type="button" variant="outline" onClick={() => setPreviewOpen(false)}>
+                  Close
+                </Button>
+                <Button asChild className="bg-accent-primary text-text-primary hover:bg-accent-primary/90">
+                  <a href={`/api/projects/${encodeURIComponent(projectId)}/specs/${encodeURIComponent(artifactId)}?download=true`}>
+                    <Download className="h-4 w-4" />
+                    Download
+                  </a>
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </div>
   )
@@ -408,8 +714,22 @@ export function AiSidebar({
             </div>
           )}
         </TabsContent>
-        <TabsContent value="spec" className="flex-1">
-          <div className="text-sm text-text-muted">Coming soon.</div>
+        <TabsContent value="spec" forceMount className="flex-1 data-[state=inactive]:hidden">
+          {currentProjectId ? (
+            <ClientSideSuspense
+              fallback={
+                <div className="flex h-full items-center justify-center rounded-md bg-bg-surface text-sm text-text-muted">
+                  Loading comments...
+                </div>
+              }
+            >
+              <SpecTab projectId={currentProjectId} />
+            </ClientSideSuspense>
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-md bg-bg-surface p-4 text-center text-sm text-text-muted">
+              Specification generation is available inside a project.
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="comments" className="min-h-0 flex-1 overflow-hidden">
           {currentProjectId ? (

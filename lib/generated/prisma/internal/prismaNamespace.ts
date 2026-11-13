@@ -796,6 +796,7 @@ export const ArtifactScalarFieldEnum = {
   projectId: 'projectId',
   type: 'type',
   blobPath: 'blobPath',
+  runId: 'runId',
   createdAt: 'createdAt'
 } as const
 

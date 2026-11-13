@@ -29,6 +29,7 @@ export type ArtifactMinAggregateOutputType = {
   projectId: string | null
   type: $Enums.ArtifactType | null
   blobPath: string | null
+  runId: string | null
   createdAt: Date | null
 }
 
@@ -37,6 +38,7 @@ export type ArtifactMaxAggregateOutputType = {
   projectId: string | null
   type: $Enums.ArtifactType | null
   blobPath: string | null
+  runId: string | null
   createdAt: Date | null
 }
 
@@ -45,6 +47,7 @@ export type ArtifactCountAggregateOutputType = {
   projectId: number
   type: number
   blobPath: number
+  runId: number
   createdAt: number
   _all: number
 }
@@ -55,6 +58,7 @@ export type ArtifactMinAggregateInputType = {
   projectId?: true
   type?: true
   blobPath?: true
+  runId?: true
   createdAt?: true
 }
 
@@ -63,6 +67,7 @@ export type ArtifactMaxAggregateInputType = {
   projectId?: true
   type?: true
   blobPath?: true
+  runId?: true
   createdAt?: true
 }
 
@@ -71,6 +76,7 @@ export type ArtifactCountAggregateInputType = {
   projectId?: true
   type?: true
   blobPath?: true
+  runId?: true
   createdAt?: true
   _all?: true
 }
@@ -152,6 +158,7 @@ export type ArtifactGroupByOutputType = {
   projectId: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId: string | null
   createdAt: Date
   _count: ArtifactCountAggregateOutputType | null
   _min: ArtifactMinAggregateOutputType | null
@@ -181,6 +188,7 @@ export type ArtifactWhereInput = {
   projectId?: Prisma.StringFilter<"Artifact"> | string
   type?: Prisma.EnumArtifactTypeFilter<"Artifact"> | $Enums.ArtifactType
   blobPath?: Prisma.StringFilter<"Artifact"> | string
+  runId?: Prisma.StringNullableFilter<"Artifact"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Artifact"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }
@@ -190,12 +198,14 @@ export type ArtifactOrderByWithRelationInput = {
   projectId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  runId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   project?: Prisma.ProjectOrderByWithRelationInput
 }
 
 export type ArtifactWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  runId?: string
   AND?: Prisma.ArtifactWhereInput | Prisma.ArtifactWhereInput[]
   OR?: Prisma.ArtifactWhereInput[]
   NOT?: Prisma.ArtifactWhereInput | Prisma.ArtifactWhereInput[]
@@ -204,13 +214,14 @@ export type ArtifactWhereUniqueInput = Prisma.AtLeast<{
   blobPath?: Prisma.StringFilter<"Artifact"> | string
   createdAt?: Prisma.DateTimeFilter<"Artifact"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
-}, "id">
+}, "id" | "runId">
 
 export type ArtifactOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  runId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ArtifactCountOrderByAggregateInput
   _max?: Prisma.ArtifactMaxOrderByAggregateInput
@@ -225,6 +236,7 @@ export type ArtifactScalarWhereWithAggregatesInput = {
   projectId?: Prisma.StringWithAggregatesFilter<"Artifact"> | string
   type?: Prisma.EnumArtifactTypeWithAggregatesFilter<"Artifact"> | $Enums.ArtifactType
   blobPath?: Prisma.StringWithAggregatesFilter<"Artifact"> | string
+  runId?: Prisma.StringNullableWithAggregatesFilter<"Artifact"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Artifact"> | Date | string
 }
 
@@ -232,6 +244,7 @@ export type ArtifactCreateInput = {
   id?: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutArtifactsInput
 }
@@ -241,6 +254,7 @@ export type ArtifactUncheckedCreateInput = {
   projectId: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
 }
 
@@ -248,6 +262,7 @@ export type ArtifactUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutArtifactsNestedInput
 }
@@ -257,6 +272,7 @@ export type ArtifactUncheckedUpdateInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -265,6 +281,7 @@ export type ArtifactCreateManyInput = {
   projectId: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
 }
 
@@ -272,6 +289,7 @@ export type ArtifactUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -280,6 +298,7 @@ export type ArtifactUncheckedUpdateManyInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -298,6 +317,7 @@ export type ArtifactCountOrderByAggregateInput = {
   projectId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -306,6 +326,7 @@ export type ArtifactMaxOrderByAggregateInput = {
   projectId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -314,6 +335,7 @@ export type ArtifactMinOrderByAggregateInput = {
   projectId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -367,6 +389,7 @@ export type ArtifactCreateWithoutProjectInput = {
   id?: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
 }
 
@@ -374,6 +397,7 @@ export type ArtifactUncheckedCreateWithoutProjectInput = {
   id?: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
 }
 
@@ -411,6 +435,7 @@ export type ArtifactScalarWhereInput = {
   projectId?: Prisma.StringFilter<"Artifact"> | string
   type?: Prisma.EnumArtifactTypeFilter<"Artifact"> | $Enums.ArtifactType
   blobPath?: Prisma.StringFilter<"Artifact"> | string
+  runId?: Prisma.StringNullableFilter<"Artifact"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Artifact"> | Date | string
 }
 
@@ -418,6 +443,7 @@ export type ArtifactCreateManyProjectInput = {
   id?: string
   type: $Enums.ArtifactType
   blobPath: string
+  runId?: string | null
   createdAt?: Date | string
 }
 
@@ -425,6 +451,7 @@ export type ArtifactUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -432,6 +459,7 @@ export type ArtifactUncheckedUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -439,6 +467,7 @@ export type ArtifactUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumArtifactTypeFieldUpdateOperationsInput | $Enums.ArtifactType
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -449,6 +478,7 @@ export type ArtifactSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   projectId?: boolean
   type?: boolean
   blobPath?: boolean
+  runId?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["artifact"]>
@@ -458,6 +488,7 @@ export type ArtifactSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   projectId?: boolean
   type?: boolean
   blobPath?: boolean
+  runId?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["artifact"]>
@@ -467,6 +498,7 @@ export type ArtifactSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   projectId?: boolean
   type?: boolean
   blobPath?: boolean
+  runId?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["artifact"]>
@@ -476,10 +508,11 @@ export type ArtifactSelectScalar = {
   projectId?: boolean
   type?: boolean
   blobPath?: boolean
+  runId?: boolean
   createdAt?: boolean
 }
 
-export type ArtifactOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "type" | "blobPath" | "createdAt", ExtArgs["result"]["artifact"]>
+export type ArtifactOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "type" | "blobPath" | "runId" | "createdAt", ExtArgs["result"]["artifact"]>
 export type ArtifactInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }
@@ -500,6 +533,7 @@ export type $ArtifactPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     projectId: string
     type: $Enums.ArtifactType
     blobPath: string
+    runId: string | null
     createdAt: Date
   }, ExtArgs["result"]["artifact"]>
   composites: {}
@@ -929,6 +963,7 @@ export interface ArtifactFieldRefs {
   readonly projectId: Prisma.FieldRef<"Artifact", 'String'>
   readonly type: Prisma.FieldRef<"Artifact", 'ArtifactType'>
   readonly blobPath: Prisma.FieldRef<"Artifact", 'String'>
+  readonly runId: Prisma.FieldRef<"Artifact", 'String'>
   readonly createdAt: Prisma.FieldRef<"Artifact", 'DateTime'>
 }
     
