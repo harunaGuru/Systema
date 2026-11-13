@@ -28,7 +28,7 @@
 
 ## Storage Model
 
-- **Postgres (Neon)**: Authoritative for project metadata and references — `Project` (ownerId, name, timestamps), `Collaborator` (projectId, userId, role), `CanvasSnapshot` (projectId, blobPath, createdAt), and `Artifact` (projectId, type: spec | canvas-json, blobPath, createdAt).
+- **Postgres (Neon)**: Authoritative for project metadata and references — `Project` (ownerId, name, timestamps), `Collaborator` (projectId, userId, role), `CanvasSnapshot` (projectId, blobPath, sequence, contentHash, prunePending, createdAt), and `Artifact` (projectId, type: spec | canvas-json, runId?, blobPath, createdAt). Spec artifacts use a nullable, unique Trigger.dev run ID so polling can resolve only the artifact produced by a submitted run.
 - **Vercel Blob**: Generated Markdown specs and canvas JSON snapshots. Postgres holds only their paths; authoritative ownership and metadata never live in Blob.
 - **Liveblocks Storage**: Live collaborative canvas state (nodes, edges). Autosave writes the current state to Vercel Blob and records a snapshot in Postgres; on room load, the latest persisted snapshot rehydrates Liveblocks.
 
@@ -46,6 +46,6 @@
 1. All authorization checks happen server-side — specifically in `app/api/` route handlers, the Liveblocks auth endpoint, and Trigger.dev task entry points — never client-only.
 2. AI graph generation and spec generation run only as Trigger.dev background jobs, never synchronously in a Next.js route handler.
 3. Liveblocks room tokens are issued only after verifying the Clerk user is the project owner or a collaborator.
-4. Every `blobPath` stored in Postgres must reference an existing Vercel Blob object; deleting a project must delete its blobs.
+4. Every active `blobPath` stored in Postgres must reference an existing Vercel Blob object; deleting a project must delete its blobs. Snapshot pruning marks rows `prunePending` within the database transaction, deletes Blobs only after commit, and retains marked rows until Blob deletion succeeds so later saves can retry cleanup.
 5. Server-only secrets (Clerk secret, Liveblocks secret, Blob token, AI keys) must never reach client bundles.
 6. Canvas state in Liveblocks Storage is the live collaborative source; persisted snapshots are for recovery and spec generation, not for live sync.

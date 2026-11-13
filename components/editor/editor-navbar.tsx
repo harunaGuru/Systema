@@ -5,7 +5,6 @@ import {
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
-  Save,
   Sparkles,
   Upload,
 } from "lucide-react";
@@ -14,6 +13,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NavbarPresence } from "@/components/editor/navbar-presence";
 import { CollaboratorDialog } from "@/components/editor/collaborator-dialog";
+import { SaveButton } from "@/components/editor/save-button";
+import { SnapshotHistory } from "@/components/editor/snapshot-history";
 
 type EditorNavbarProps = {
   isSidebarOpen: boolean;
@@ -27,6 +28,8 @@ type EditorNavbarProps = {
   projectId?: string;
   isOwner?: boolean;
   unreadCommentsCount?: number;
+  save?: () => Promise<void>;
+  isSaving?: boolean;
 };
 
 const outlineActionClassName =
@@ -44,6 +47,8 @@ export function EditorNavbar({
   projectId,
   isOwner = false,
   unreadCommentsCount = 0,
+  save,
+  isSaving = false,
 }: EditorNavbarProps) {
   return (
     <header className="grid h-14 shrink-0 grid-cols-3 items-center border-b border-border-default bg-bg-base/80 px-4 backdrop-blur-md">
@@ -84,16 +89,8 @@ export function EditorNavbar({
         )}
       </div>
       <div className="flex items-center justify-self-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className={outlineActionClassName}
-          disabled
-          aria-label="Save"
-        >
-          <Save className="h-4 w-4" />
-          Save
-        </Button>
+        {isProjectPage && save && <SaveButton save={save} isSaving={isSaving} />}
+        {isProjectPage && projectId && <SnapshotHistory projectId={projectId} />}
         <Button
           type="button"
           variant="outline"

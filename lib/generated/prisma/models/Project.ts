@@ -20,14 +20,25 @@ export type ProjectModel = runtime.Types.Result.DefaultSelection<Prisma.$Project
 
 export type AggregateProject = {
   _count: ProjectCountAggregateOutputType | null
+  _avg: ProjectAvgAggregateOutputType | null
+  _sum: ProjectSumAggregateOutputType | null
   _min: ProjectMinAggregateOutputType | null
   _max: ProjectMaxAggregateOutputType | null
+}
+
+export type ProjectAvgAggregateOutputType = {
+  snapshotSequence: number | null
+}
+
+export type ProjectSumAggregateOutputType = {
+  snapshotSequence: number | null
 }
 
 export type ProjectMinAggregateOutputType = {
   id: string | null
   name: string | null
   ownerId: string | null
+  snapshotSequence: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -36,6 +47,7 @@ export type ProjectMaxAggregateOutputType = {
   id: string | null
   name: string | null
   ownerId: string | null
+  snapshotSequence: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,16 +56,26 @@ export type ProjectCountAggregateOutputType = {
   id: number
   name: number
   ownerId: number
+  snapshotSequence: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
 
+export type ProjectAvgAggregateInputType = {
+  snapshotSequence?: true
+}
+
+export type ProjectSumAggregateInputType = {
+  snapshotSequence?: true
+}
+
 export type ProjectMinAggregateInputType = {
   id?: true
   name?: true
   ownerId?: true
+  snapshotSequence?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -62,6 +84,7 @@ export type ProjectMaxAggregateInputType = {
   id?: true
   name?: true
   ownerId?: true
+  snapshotSequence?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -70,6 +93,7 @@ export type ProjectCountAggregateInputType = {
   id?: true
   name?: true
   ownerId?: true
+  snapshotSequence?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -113,6 +137,18 @@ export type ProjectAggregateArgs<ExtArgs extends runtime.Types.Extensions.Intern
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: ProjectAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: ProjectSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: ProjectMinAggregateInputType
@@ -143,6 +179,8 @@ export type ProjectGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   _count?: ProjectCountAggregateInputType | true
+  _avg?: ProjectAvgAggregateInputType
+  _sum?: ProjectSumAggregateInputType
   _min?: ProjectMinAggregateInputType
   _max?: ProjectMaxAggregateInputType
 }
@@ -151,9 +189,12 @@ export type ProjectGroupByOutputType = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence: number
   createdAt: Date
   updatedAt: Date
   _count: ProjectCountAggregateOutputType | null
+  _avg: ProjectAvgAggregateOutputType | null
+  _sum: ProjectSumAggregateOutputType | null
   _min: ProjectMinAggregateOutputType | null
   _max: ProjectMaxAggregateOutputType | null
 }
@@ -180,6 +221,7 @@ export type ProjectWhereInput = {
   id?: Prisma.StringFilter<"Project"> | string
   name?: Prisma.StringFilter<"Project"> | string
   ownerId?: Prisma.StringFilter<"Project"> | string
+  snapshotSequence?: Prisma.IntFilter<"Project"> | number
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   collaborators?: Prisma.CollaboratorListRelationFilter
@@ -191,6 +233,7 @@ export type ProjectOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  snapshotSequence?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   collaborators?: Prisma.CollaboratorOrderByRelationAggregateInput
@@ -205,6 +248,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   name?: Prisma.StringFilter<"Project"> | string
   ownerId?: Prisma.StringFilter<"Project"> | string
+  snapshotSequence?: Prisma.IntFilter<"Project"> | number
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   collaborators?: Prisma.CollaboratorListRelationFilter
@@ -216,11 +260,14 @@ export type ProjectOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  snapshotSequence?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ProjectCountOrderByAggregateInput
+  _avg?: Prisma.ProjectAvgOrderByAggregateInput
   _max?: Prisma.ProjectMaxOrderByAggregateInput
   _min?: Prisma.ProjectMinOrderByAggregateInput
+  _sum?: Prisma.ProjectSumOrderByAggregateInput
 }
 
 export type ProjectScalarWhereWithAggregatesInput = {
@@ -230,6 +277,7 @@ export type ProjectScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Project"> | string
   name?: Prisma.StringWithAggregatesFilter<"Project"> | string
   ownerId?: Prisma.StringWithAggregatesFilter<"Project"> | string
+  snapshotSequence?: Prisma.IntWithAggregatesFilter<"Project"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
 }
@@ -238,6 +286,7 @@ export type ProjectCreateInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorCreateNestedManyWithoutProjectInput
@@ -249,6 +298,7 @@ export type ProjectUncheckedCreateInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorUncheckedCreateNestedManyWithoutProjectInput
@@ -260,6 +310,7 @@ export type ProjectUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUpdateManyWithoutProjectNestedInput
@@ -271,6 +322,7 @@ export type ProjectUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUncheckedUpdateManyWithoutProjectNestedInput
@@ -282,6 +334,7 @@ export type ProjectCreateManyInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -290,6 +343,7 @@ export type ProjectUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -298,6 +352,7 @@ export type ProjectUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -306,14 +361,20 @@ export type ProjectCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  snapshotSequence?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ProjectAvgOrderByAggregateInput = {
+  snapshotSequence?: Prisma.SortOrder
 }
 
 export type ProjectMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  snapshotSequence?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -322,8 +383,13 @@ export type ProjectMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  snapshotSequence?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ProjectSumOrderByAggregateInput = {
+  snapshotSequence?: Prisma.SortOrder
 }
 
 export type ProjectScalarRelationFilter = {
@@ -333,6 +399,14 @@ export type ProjectScalarRelationFilter = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -385,6 +459,7 @@ export type ProjectCreateWithoutCollaboratorsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   snapshots?: Prisma.CanvasSnapshotCreateNestedManyWithoutProjectInput
@@ -395,6 +470,7 @@ export type ProjectUncheckedCreateWithoutCollaboratorsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   snapshots?: Prisma.CanvasSnapshotUncheckedCreateNestedManyWithoutProjectInput
@@ -421,6 +497,7 @@ export type ProjectUpdateWithoutCollaboratorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   snapshots?: Prisma.CanvasSnapshotUpdateManyWithoutProjectNestedInput
@@ -431,6 +508,7 @@ export type ProjectUncheckedUpdateWithoutCollaboratorsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   snapshots?: Prisma.CanvasSnapshotUncheckedUpdateManyWithoutProjectNestedInput
@@ -441,6 +519,7 @@ export type ProjectCreateWithoutSnapshotsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorCreateNestedManyWithoutProjectInput
@@ -451,6 +530,7 @@ export type ProjectUncheckedCreateWithoutSnapshotsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorUncheckedCreateNestedManyWithoutProjectInput
@@ -477,6 +557,7 @@ export type ProjectUpdateWithoutSnapshotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUpdateManyWithoutProjectNestedInput
@@ -487,6 +568,7 @@ export type ProjectUncheckedUpdateWithoutSnapshotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUncheckedUpdateManyWithoutProjectNestedInput
@@ -497,6 +579,7 @@ export type ProjectCreateWithoutArtifactsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorCreateNestedManyWithoutProjectInput
@@ -507,6 +590,7 @@ export type ProjectUncheckedCreateWithoutArtifactsInput = {
   id: string
   name: string
   ownerId: string
+  snapshotSequence?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   collaborators?: Prisma.CollaboratorUncheckedCreateNestedManyWithoutProjectInput
@@ -533,6 +617,7 @@ export type ProjectUpdateWithoutArtifactsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUpdateManyWithoutProjectNestedInput
@@ -543,6 +628,7 @@ export type ProjectUncheckedUpdateWithoutArtifactsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  snapshotSequence?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   collaborators?: Prisma.CollaboratorUncheckedUpdateManyWithoutProjectNestedInput
@@ -602,6 +688,7 @@ export type ProjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   name?: boolean
   ownerId?: boolean
+  snapshotSequence?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   collaborators?: boolean | Prisma.Project$collaboratorsArgs<ExtArgs>
@@ -614,6 +701,7 @@ export type ProjectSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   name?: boolean
   ownerId?: boolean
+  snapshotSequence?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["project"]>
@@ -622,6 +710,7 @@ export type ProjectSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   name?: boolean
   ownerId?: boolean
+  snapshotSequence?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["project"]>
@@ -630,11 +719,12 @@ export type ProjectSelectScalar = {
   id?: boolean
   name?: boolean
   ownerId?: boolean
+  snapshotSequence?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "ownerId" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
+export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "ownerId" | "snapshotSequence" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
 export type ProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   collaborators?: boolean | Prisma.Project$collaboratorsArgs<ExtArgs>
   snapshots?: boolean | Prisma.Project$snapshotsArgs<ExtArgs>
@@ -655,6 +745,7 @@ export type $ProjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: string
     name: string
     ownerId: string
+    snapshotSequence: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["project"]>
@@ -1086,6 +1177,7 @@ export interface ProjectFieldRefs {
   readonly id: Prisma.FieldRef<"Project", 'String'>
   readonly name: Prisma.FieldRef<"Project", 'String'>
   readonly ownerId: Prisma.FieldRef<"Project", 'String'>
+  readonly snapshotSequence: Prisma.FieldRef<"Project", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Project", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Project", 'DateTime'>
 }

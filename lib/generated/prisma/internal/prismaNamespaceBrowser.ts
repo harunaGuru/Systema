@@ -77,6 +77,7 @@ export const ProjectScalarFieldEnum = {
   id: 'id',
   name: 'name',
   ownerId: 'ownerId',
+  snapshotSequence: 'snapshotSequence',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -99,6 +100,9 @@ export const CanvasSnapshotScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   blobPath: 'blobPath',
+  sequence: 'sequence',
+  contentHash: 'contentHash',
+  prunePending: 'prunePending',
   createdAt: 'createdAt'
 } as const
 
@@ -130,4 +134,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

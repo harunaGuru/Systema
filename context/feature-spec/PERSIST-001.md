@@ -34,8 +34,9 @@ Do not modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `
   - **Invariant #6:** Liveblocks Storage is the live source. We are saving a _snapshot_ of it to Blob/Postgres. We are not modifying the Liveblocks storage directly from Postgres.
   - **Save Logic:** The client sends the current `nodes` and `edges` to the API route. The route uploads this JSON to Vercel Blob under `canvas-json/{projectId}/{uuid}.json`, then inserts a `CanvasSnapshot` row with the `blobPath`.
   - **Unique Blob paths:** Generate each filename with `crypto.randomUUID()` (or an equivalent cryptographically random suffix) and keep `addRandomSuffix: false`, so the SDK does not alter the selected unique path.
-  - **Project-scoped save coordination and deduplication:** Add a monotonically incremented `snapshotSequence` to `Project`, plus `sequence` and a SHA-256 `contentHash` to `CanvasSnapshot`. Use unique constraints on `(projectId, sequence)` and `(projectId, contentHash)`. Within a database transaction, acquire a lock on the project row before checking the hash or assigning a sequence; serialize the canonical JSON payload consistently before hashing. If that project already has the hash, return the existing snapshot instead of uploading or creating another history entry. Otherwise increment the sequence, upload the Blob, and create its row while holding the lock. This coordinates all clients and server instances, not just one hook's local ref. Order snapshots by `sequence`, not upload completion time.
-  - **Pruning:** After inserting a new snapshot, find rows older than the 5 most recent by `sequence`. Delete their Blob objects first, then delete their rows. If Blob deletion fails, retain the rows and paths so a later save can retry cleanup.
+  - **Project-scoped save coordination and deduplication:** Add a monotonically incremented `snapshotSequence` to `Project`, plus `sequence` and a SHA-256 `contentHash` to `CanvasSnapshot`. Enforce uniqueness on `(projectId, sequence)` only; the same content hash may recur at multiple sequences. Within a database transaction, acquire a lock on the project row before checking the latest snapshot or assigning a sequence; serialize the canonical JSON payload consistently before hashing. Deduplicate only when the latest snapshot has the requested hash. Otherwise increment the sequence, upload the Blob, and create its row while holding the lock. This coordinates all clients and server instances, not just one hook's local ref. Order snapshots by `sequence`, not upload completion time.
+  - **Pruning:** In the transaction, mark rows older than the 5 most recent by `sequence` with `prunePending`. After commit, delete each marked Blob and then its database row. If either cleanup step fails, retain the marked row so a later save can retry. Never delete a Blob before the transaction commits.
+  - **Payload validation and upload compensation:** Validate with `CanvasSnapshotPayloadSchema` before uploading. If snapshot creation, prune marking, timeout, or transaction commit fails after upload, attempt to delete the new Blob; log cleanup failure without replacing the original transaction error.
   - **Autosave Timing:** Debounce 3000ms after the last change. A forced save triggers every 60,000ms if changes occurred since the last save.
   - **Manual Save:** The button in the navbar triggers the save immediately, bypassing the debounce timer.
 
@@ -45,18 +46,17 @@ Do not modify `app/globals.css`, `components/ui/*`, `context/*`, `planning/*`, `
 
 Create a Route Handler that validates the payload, uploads to Blob, and manages the Postgres rows.
 
+The abbreviated sketch below is illustrative only; the transaction, compensation, and post-commit cleanup requirements below are normative.
+
 START OF route.ts snippet
 
     import { NextResponse } from "next/server";
     import { put, del } from "@vercel/blob";
     import { prisma } from "@/lib/db";
     import { requireProjectAccess } from "@/lib/server/auth";
-    import { z } from "zod";
+    import { CanvasSnapshotPayloadSchema } from "@/types/canvas-snapshot";
 
-    const SaveSchema = z.object({
-      nodes: z.array(z.any()), // Relaxed for performance, canvas shapes are validated on insert
-      edges: z.array(z.any()),
-    });
+    const SaveSchema = CanvasSnapshotPayloadSchema;
 
     export async function POST(req: Request, { params }: { params: Promise<{ projectId: string }> }) {
       try {
@@ -79,19 +79,8 @@ START OF route.ts snippet
           data: { projectId, blobPath: blob.url },
         });
 
-        // 3. Prune old snapshots (keep 5 most recent)
-        const oldSnapshots = await prisma.canvasSnapshot.findMany({
-          where: { projectId },
-          orderBy: { sequence: "desc" },
-          skip: 5,
-        });
-
-        if (oldSnapshots.length > 0) {
-          await del(oldSnapshots.map(s => s.blobPath));
-          await prisma.canvasSnapshot.deleteMany({
-            where: { id: { in: oldSnapshots.map(s => s.id) } },
-          });
-        }
+        // Mark snapshots beyond the five newest as prunePending in the transaction.
+        // After commit, delete their Blobs and then their rows; retain marked rows on failure.
 
         return NextResponse.json({ success: true, snapshotId: snapshot.id });
       } catch (error: any) {
@@ -102,9 +91,9 @@ START OF route.ts snippet
 
 END OF route.ts snippet
 
-Before implementation, add these fields and constraints to Prisma and create a migration: `Project.snapshotSequence Int @default(0)`; `CanvasSnapshot.sequence Int`; `CanvasSnapshot.contentHash String?`; unique constraints on `(projectId, sequence)` and `(projectId, contentHash)`. Backfill existing snapshot sequences deterministically per project (by `createdAt`, then `id`) and initialize each project's counter to its maximum sequence. Existing rows may retain a null hash; all new rows must store the canonical payload's SHA-256 hash.
+Before implementation, add these fields and constraints to Prisma and create a migration: `Project.snapshotSequence Int @default(0)`; `CanvasSnapshot.sequence Int`; `CanvasSnapshot.contentHash String?`; `CanvasSnapshot.prunePending Boolean @default(false)`; and uniqueness on `(projectId, sequence)`. Do not make `(projectId, contentHash)` unique. Backfill existing snapshot sequences deterministically per project (by `createdAt`, then `id`) and initialize each project's counter to its maximum sequence. Existing rows may retain a null hash; all new rows must store the canonical payload's SHA-256 hash.
 
-The save handler must acquire the project-scoped database lock before deduplication, sequence assignment, upload, snapshot insertion, and pruning. Hold the lock through completion so two saves for one project cannot finish out of order. Check for an existing content hash while holding the lock; if found, return its existing snapshot and create no duplicate. Otherwise allocate the next sequence, upload to the UUID path, and create the row. When pruning, call `del` for the old Blob paths before `prisma.canvasSnapshot.deleteMany`; only remove their database rows after Blob deletion succeeds. If deletion fails, log/report the failure and retain those rows and paths so a later save can retry cleanup. Do not silently drop cleanup records.
+The save handler must acquire the project-scoped database lock before latest-snapshot deduplication, sequence assignment, upload, snapshot insertion, and prune marking. Hold the lock through commit so two saves for one project cannot finish out of order. If only an older snapshot has the same content hash, create a new sequence. On any transaction failure after upload, compensate by deleting the new Blob without concealing the original error. After commit, call `del` for each marked old Blob path and then delete its `CanvasSnapshot` row; retain `prunePending` rows after any cleanup failure so a later save can retry. Do not call `del` before commit or silently drop cleanup records.
 
 ### 2. Create `hooks/use-autosave.ts`
 

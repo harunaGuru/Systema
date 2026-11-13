@@ -20,14 +20,27 @@ export type CanvasSnapshotModel = runtime.Types.Result.DefaultSelection<Prisma.$
 
 export type AggregateCanvasSnapshot = {
   _count: CanvasSnapshotCountAggregateOutputType | null
+  _avg: CanvasSnapshotAvgAggregateOutputType | null
+  _sum: CanvasSnapshotSumAggregateOutputType | null
   _min: CanvasSnapshotMinAggregateOutputType | null
   _max: CanvasSnapshotMaxAggregateOutputType | null
+}
+
+export type CanvasSnapshotAvgAggregateOutputType = {
+  sequence: number | null
+}
+
+export type CanvasSnapshotSumAggregateOutputType = {
+  sequence: number | null
 }
 
 export type CanvasSnapshotMinAggregateOutputType = {
   id: string | null
   projectId: string | null
   blobPath: string | null
+  sequence: number | null
+  contentHash: string | null
+  prunePending: boolean | null
   createdAt: Date | null
 }
 
@@ -35,6 +48,9 @@ export type CanvasSnapshotMaxAggregateOutputType = {
   id: string | null
   projectId: string | null
   blobPath: string | null
+  sequence: number | null
+  contentHash: string | null
+  prunePending: boolean | null
   createdAt: Date | null
 }
 
@@ -42,15 +58,29 @@ export type CanvasSnapshotCountAggregateOutputType = {
   id: number
   projectId: number
   blobPath: number
+  sequence: number
+  contentHash: number
+  prunePending: number
   createdAt: number
   _all: number
 }
 
 
+export type CanvasSnapshotAvgAggregateInputType = {
+  sequence?: true
+}
+
+export type CanvasSnapshotSumAggregateInputType = {
+  sequence?: true
+}
+
 export type CanvasSnapshotMinAggregateInputType = {
   id?: true
   projectId?: true
   blobPath?: true
+  sequence?: true
+  contentHash?: true
+  prunePending?: true
   createdAt?: true
 }
 
@@ -58,6 +88,9 @@ export type CanvasSnapshotMaxAggregateInputType = {
   id?: true
   projectId?: true
   blobPath?: true
+  sequence?: true
+  contentHash?: true
+  prunePending?: true
   createdAt?: true
 }
 
@@ -65,6 +98,9 @@ export type CanvasSnapshotCountAggregateInputType = {
   id?: true
   projectId?: true
   blobPath?: true
+  sequence?: true
+  contentHash?: true
+  prunePending?: true
   createdAt?: true
   _all?: true
 }
@@ -107,6 +143,18 @@ export type CanvasSnapshotAggregateArgs<ExtArgs extends runtime.Types.Extensions
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: CanvasSnapshotAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: CanvasSnapshotSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: CanvasSnapshotMinAggregateInputType
@@ -137,6 +185,8 @@ export type CanvasSnapshotGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   _count?: CanvasSnapshotCountAggregateInputType | true
+  _avg?: CanvasSnapshotAvgAggregateInputType
+  _sum?: CanvasSnapshotSumAggregateInputType
   _min?: CanvasSnapshotMinAggregateInputType
   _max?: CanvasSnapshotMaxAggregateInputType
 }
@@ -145,8 +195,13 @@ export type CanvasSnapshotGroupByOutputType = {
   id: string
   projectId: string
   blobPath: string
+  sequence: number
+  contentHash: string | null
+  prunePending: boolean
   createdAt: Date
   _count: CanvasSnapshotCountAggregateOutputType | null
+  _avg: CanvasSnapshotAvgAggregateOutputType | null
+  _sum: CanvasSnapshotSumAggregateOutputType | null
   _min: CanvasSnapshotMinAggregateOutputType | null
   _max: CanvasSnapshotMaxAggregateOutputType | null
 }
@@ -173,6 +228,9 @@ export type CanvasSnapshotWhereInput = {
   id?: Prisma.StringFilter<"CanvasSnapshot"> | string
   projectId?: Prisma.StringFilter<"CanvasSnapshot"> | string
   blobPath?: Prisma.StringFilter<"CanvasSnapshot"> | string
+  sequence?: Prisma.IntFilter<"CanvasSnapshot"> | number
+  contentHash?: Prisma.StringNullableFilter<"CanvasSnapshot"> | string | null
+  prunePending?: Prisma.BoolFilter<"CanvasSnapshot"> | boolean
   createdAt?: Prisma.DateTimeFilter<"CanvasSnapshot"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
 }
@@ -181,29 +239,41 @@ export type CanvasSnapshotOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  sequence?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  prunePending?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   project?: Prisma.ProjectOrderByWithRelationInput
 }
 
 export type CanvasSnapshotWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  projectId_sequence?: Prisma.CanvasSnapshotProjectIdSequenceCompoundUniqueInput
   AND?: Prisma.CanvasSnapshotWhereInput | Prisma.CanvasSnapshotWhereInput[]
   OR?: Prisma.CanvasSnapshotWhereInput[]
   NOT?: Prisma.CanvasSnapshotWhereInput | Prisma.CanvasSnapshotWhereInput[]
   projectId?: Prisma.StringFilter<"CanvasSnapshot"> | string
   blobPath?: Prisma.StringFilter<"CanvasSnapshot"> | string
+  sequence?: Prisma.IntFilter<"CanvasSnapshot"> | number
+  contentHash?: Prisma.StringNullableFilter<"CanvasSnapshot"> | string | null
+  prunePending?: Prisma.BoolFilter<"CanvasSnapshot"> | boolean
   createdAt?: Prisma.DateTimeFilter<"CanvasSnapshot"> | Date | string
   project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
-}, "id">
+}, "id" | "projectId_sequence">
 
 export type CanvasSnapshotOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  sequence?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  prunePending?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.CanvasSnapshotCountOrderByAggregateInput
+  _avg?: Prisma.CanvasSnapshotAvgOrderByAggregateInput
   _max?: Prisma.CanvasSnapshotMaxOrderByAggregateInput
   _min?: Prisma.CanvasSnapshotMinOrderByAggregateInput
+  _sum?: Prisma.CanvasSnapshotSumOrderByAggregateInput
 }
 
 export type CanvasSnapshotScalarWhereWithAggregatesInput = {
@@ -213,12 +283,18 @@ export type CanvasSnapshotScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"CanvasSnapshot"> | string
   projectId?: Prisma.StringWithAggregatesFilter<"CanvasSnapshot"> | string
   blobPath?: Prisma.StringWithAggregatesFilter<"CanvasSnapshot"> | string
+  sequence?: Prisma.IntWithAggregatesFilter<"CanvasSnapshot"> | number
+  contentHash?: Prisma.StringNullableWithAggregatesFilter<"CanvasSnapshot"> | string | null
+  prunePending?: Prisma.BoolWithAggregatesFilter<"CanvasSnapshot"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CanvasSnapshot"> | Date | string
 }
 
 export type CanvasSnapshotCreateInput = {
   id?: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
   project: Prisma.ProjectCreateNestedOneWithoutSnapshotsInput
 }
@@ -227,12 +303,18 @@ export type CanvasSnapshotUncheckedCreateInput = {
   id?: string
   projectId: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
 }
 
 export type CanvasSnapshotUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutSnapshotsNestedInput
 }
@@ -241,6 +323,9 @@ export type CanvasSnapshotUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -248,12 +333,18 @@ export type CanvasSnapshotCreateManyInput = {
   id?: string
   projectId: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
 }
 
 export type CanvasSnapshotUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -261,6 +352,9 @@ export type CanvasSnapshotUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -274,17 +368,32 @@ export type CanvasSnapshotOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type CanvasSnapshotProjectIdSequenceCompoundUniqueInput = {
+  projectId: string
+  sequence: number
+}
+
 export type CanvasSnapshotCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  sequence?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
+  prunePending?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type CanvasSnapshotAvgOrderByAggregateInput = {
+  sequence?: Prisma.SortOrder
 }
 
 export type CanvasSnapshotMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  sequence?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
+  prunePending?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -292,7 +401,14 @@ export type CanvasSnapshotMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   projectId?: Prisma.SortOrder
   blobPath?: Prisma.SortOrder
+  sequence?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
+  prunePending?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type CanvasSnapshotSumOrderByAggregateInput = {
+  sequence?: Prisma.SortOrder
 }
 
 export type CanvasSnapshotCreateNestedManyWithoutProjectInput = {
@@ -337,15 +453,29 @@ export type CanvasSnapshotUncheckedUpdateManyWithoutProjectNestedInput = {
   deleteMany?: Prisma.CanvasSnapshotScalarWhereInput | Prisma.CanvasSnapshotScalarWhereInput[]
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type CanvasSnapshotCreateWithoutProjectInput = {
   id?: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
 }
 
 export type CanvasSnapshotUncheckedCreateWithoutProjectInput = {
   id?: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
 }
 
@@ -382,30 +512,45 @@ export type CanvasSnapshotScalarWhereInput = {
   id?: Prisma.StringFilter<"CanvasSnapshot"> | string
   projectId?: Prisma.StringFilter<"CanvasSnapshot"> | string
   blobPath?: Prisma.StringFilter<"CanvasSnapshot"> | string
+  sequence?: Prisma.IntFilter<"CanvasSnapshot"> | number
+  contentHash?: Prisma.StringNullableFilter<"CanvasSnapshot"> | string | null
+  prunePending?: Prisma.BoolFilter<"CanvasSnapshot"> | boolean
   createdAt?: Prisma.DateTimeFilter<"CanvasSnapshot"> | Date | string
 }
 
 export type CanvasSnapshotCreateManyProjectInput = {
   id?: string
   blobPath: string
+  sequence: number
+  contentHash?: string | null
+  prunePending?: boolean
   createdAt?: Date | string
 }
 
 export type CanvasSnapshotUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CanvasSnapshotUncheckedUpdateWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CanvasSnapshotUncheckedUpdateManyWithoutProjectInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   blobPath?: Prisma.StringFieldUpdateOperationsInput | string
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prunePending?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -415,6 +560,9 @@ export type CanvasSnapshotSelect<ExtArgs extends runtime.Types.Extensions.Intern
   id?: boolean
   projectId?: boolean
   blobPath?: boolean
+  sequence?: boolean
+  contentHash?: boolean
+  prunePending?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["canvasSnapshot"]>
@@ -423,6 +571,9 @@ export type CanvasSnapshotSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   projectId?: boolean
   blobPath?: boolean
+  sequence?: boolean
+  contentHash?: boolean
+  prunePending?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["canvasSnapshot"]>
@@ -431,6 +582,9 @@ export type CanvasSnapshotSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   projectId?: boolean
   blobPath?: boolean
+  sequence?: boolean
+  contentHash?: boolean
+  prunePending?: boolean
   createdAt?: boolean
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["canvasSnapshot"]>
@@ -439,10 +593,13 @@ export type CanvasSnapshotSelectScalar = {
   id?: boolean
   projectId?: boolean
   blobPath?: boolean
+  sequence?: boolean
+  contentHash?: boolean
+  prunePending?: boolean
   createdAt?: boolean
 }
 
-export type CanvasSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "blobPath" | "createdAt", ExtArgs["result"]["canvasSnapshot"]>
+export type CanvasSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "blobPath" | "sequence" | "contentHash" | "prunePending" | "createdAt", ExtArgs["result"]["canvasSnapshot"]>
 export type CanvasSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
 }
@@ -462,6 +619,9 @@ export type $CanvasSnapshotPayload<ExtArgs extends runtime.Types.Extensions.Inte
     id: string
     projectId: string
     blobPath: string
+    sequence: number
+    contentHash: string | null
+    prunePending: boolean
     createdAt: Date
   }, ExtArgs["result"]["canvasSnapshot"]>
   composites: {}
@@ -890,6 +1050,9 @@ export interface CanvasSnapshotFieldRefs {
   readonly id: Prisma.FieldRef<"CanvasSnapshot", 'String'>
   readonly projectId: Prisma.FieldRef<"CanvasSnapshot", 'String'>
   readonly blobPath: Prisma.FieldRef<"CanvasSnapshot", 'String'>
+  readonly sequence: Prisma.FieldRef<"CanvasSnapshot", 'Int'>
+  readonly contentHash: Prisma.FieldRef<"CanvasSnapshot", 'String'>
+  readonly prunePending: Prisma.FieldRef<"CanvasSnapshot", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"CanvasSnapshot", 'DateTime'>
 }
     

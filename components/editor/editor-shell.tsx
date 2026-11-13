@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { deleteProject } from "@/actions/delete-project"
 import { createProject } from "@/actions/projects"
@@ -15,6 +15,23 @@ import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { TemplateImportProvider } from "@/components/editor/template-import-context"
 import { TemplateSidebar } from "@/components/editor/template-sidebar"
 import { useProjectDialogs } from "@/hooks/use-project-dialogs"
+import { useAutosave, useRehydrate } from "@/hooks/use-autosave"
+
+type AutosaveState = { save: () => Promise<void>; isSaving: boolean }
+
+function AutosaveBridge({
+  projectId,
+  onStateChange,
+}: {
+  projectId: string
+  onStateChange: (state: AutosaveState) => void
+}) {
+  const state = useAutosave(projectId)
+  useRehydrate(projectId)
+  const { save, isSaving } = state
+  useEffect(() => onStateChange({ save, isSaving }), [onStateChange, isSaving, save])
+  return null
+}
 
 type EditorShellProps = {
   children?: ReactNode
@@ -39,6 +56,7 @@ export function EditorShell({
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [activeRightSidebar, setActiveRightSidebar] = useState<"ai" | "templates" | null>(null)
   const [unreadCommentsCount, setUnreadCommentsCount] = useState(0)
+  const [autosaveState, setAutosaveState] = useState<AutosaveState | null>(null)
   const isRightSidebarOpen = activeRightSidebar === "ai"
   const isAiSidebarOpen = isRightSidebarOpen
   const isTemplateSidebarOpen = activeRightSidebar === "templates"
@@ -138,7 +156,12 @@ export function EditorShell({
           projectId={currentProjectId}
           isOwner={isOwner}
           unreadCommentsCount={unreadCommentsCount}
+          save={autosaveState?.save}
+          isSaving={autosaveState?.isSaving}
         />
+        {currentProjectId && (
+          <AutosaveBridge key={currentProjectId} projectId={currentProjectId} onStateChange={setAutosaveState} />
+        )}
         <ProjectSidebar
           isOpen={isSidebarOpen}
           onClose={() => setSidebarOpen(false)}

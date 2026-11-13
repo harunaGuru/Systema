@@ -11,6 +11,7 @@ model Project {
   id            String           @id
   name          String
   ownerId       String
+  snapshotSequence Int             @default(0)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   collaborators Collaborator[]
@@ -38,10 +39,14 @@ model CanvasSnapshot {
   id        String   @id @default(cuid())
   projectId String
   blobPath  String
+  sequence  Int
+  contentHash String?
+  prunePending Boolean @default(false)
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@unique([projectId, sequence])
 }
 
 model Artifact {
