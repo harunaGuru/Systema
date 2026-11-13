@@ -6,7 +6,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sparkles,
-  Upload,
 } from "lucide-react";
 import { Show, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -31,9 +30,6 @@ type EditorNavbarProps = {
   save?: () => Promise<void>;
   isSaving?: boolean;
 };
-
-const outlineActionClassName =
-  "h-10 rounded-md border border-border-default bg-bg-base px-4 text-text-primary transition-all enabled:hover:-translate-y-0.5 enabled:hover:border-accent-primary enabled:hover:bg-bg-elevated enabled:hover:shadow-md focus-visible:outline-2 focus-visible:outline-accent-primary focus-visible:outline-offset-2 disabled:!pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-bg-base disabled:hover:text-text-primary";
 
 export function EditorNavbar({
   isSidebarOpen,
@@ -91,16 +87,6 @@ export function EditorNavbar({
       <div className="flex items-center justify-self-end gap-2">
         {isProjectPage && save && <SaveButton save={save} isSaving={isSaving} />}
         {isProjectPage && projectId && <SnapshotHistory projectId={projectId} />}
-        <Button
-          type="button"
-          variant="outline"
-          className={outlineActionClassName}
-          disabled
-          aria-label="Import"
-        >
-          <Upload className="h-4 w-4" />
-          Import
-        </Button>
         {isProjectPage && (
           <Button
             type="button"

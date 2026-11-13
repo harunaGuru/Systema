@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react"
 import { LiveMap, LiveObject } from "@liveblocks/client"
 import { useMutation } from "@liveblocks/react"
-import { History } from "lucide-react"
+import { Download, History } from "lucide-react"
 import type { Edge, Node } from "@xyflow/react"
 import type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "@liveblocks/react-flow"
 import { z } from "zod"
@@ -154,6 +154,19 @@ export function SnapshotHistory({ projectId }: { projectId: string }) {
             Restoring a snapshot replaces the current shared canvas for everyone in this project.
           </DialogDescription>
         </DialogHeader>
+        {isLoading || snapshots.length === 0 ? (
+          <Button type="button" variant="outline" disabled>
+            <Download className="h-4 w-4" />
+            Download Latest JSON
+          </Button>
+        ) : (
+          <Button asChild variant="outline">
+            <a href={`/api/projects/${encodeURIComponent(projectId)}/snapshots/latest/download`}>
+              <Download className="h-4 w-4" />
+              Download Latest JSON
+            </a>
+          </Button>
+        )}
         {isLoading ? (
           <p className="text-sm text-text-muted">Loading snapshots...</p>
         ) : snapshots.length === 0 ? (

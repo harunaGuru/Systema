@@ -1,5 +1,6 @@
 
 @import "tailwindcss";
+@import "@clerk/ui/themes/shadcn.css";
 
 /* ------------------------------------------------------------------ */
 /* Systema — globals.css                                               */
@@ -132,4 +133,91 @@ body {
 /* Keep Liveblocks' body-level emoji and menu portals above floating sidebars. */
 .lb-portal {
   z-index: 60;
+}
+
+/* Clerk's component theme uses higher-specificity defaults than appearance classes. */
+.cl-cardBox {
+  background-color: color-mix(in oklch, var(--color-bg-surface) 96%, transparent) !important;
+  border: 1px solid var(--color-border-default) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-float) !important;
+  overflow: hidden;
+}
+
+.cl-card {
+  padding: calc(var(--spacing) * 6) !important;
+}
+
+.cl-footer {
+  border-top: 1px solid var(--color-border-subtle) !important;
+  padding: calc(var(--spacing) * 4) calc(var(--spacing) * 6) !important;
+}
+
+.cl-headerTitle {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-xl) !important;
+}
+
+.cl-headerSubtitle {
+  color: var(--color-text-muted) !important;
+  font-size: var(--text-base) !important;
+}
+
+.cl-formFieldLabel {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+}
+
+.cl-formFieldInput {
+  background-color: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-base) !important;
+  min-height: calc(var(--spacing) * 11);
+}
+
+.cl-formFieldInput:focus {
+  border-color: var(--color-accent-primary) !important;
+}
+
+.cl-otpCodeFieldInput {
+  background-color: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-default) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-lg) !important;
+  font-weight: 600 !important;
+}
+
+.cl-socialButtonsBlockButton {
+  background-color: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-default) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-base) !important;
+  min-height: calc(var(--spacing) * 11);
+}
+
+.cl-socialButtonsBlockButtonText {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-base) !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: var(--color-accent-primary) !important;
+  color: var(--color-bg-base) !important;
+  font-size: var(--text-base) !important;
+  font-weight: 600 !important;
+  min-height: calc(var(--spacing) * 11);
+}
+
+.cl-dividerText,
+.cl-footerActionText {
+  color: var(--color-text-muted) !important;
+  font-size: var(--text-sm) !important;
+}
+
+.cl-footerActionLink {
+  color: var(--color-accent-primary) !important;
+  font-size: var(--text-sm) !important;
 }
