@@ -185,3 +185,5 @@ UI-001 through UI-004 have been implemented and verified in this workspace. The 
   "viewport": { "x": 0, "y": 0, "zoom": 1 }
 }
 ```
+
+- **AI Sidebar prompt overflow fix.** Set the Prompt tab form to lex-1 overflow-hidden and constrained its textarea to 150–300px with internal vertical scrolling and resizing disabled. Requested lint, typecheck, and webpack build checks are pending; manual long-prompt browser verification is pending.
