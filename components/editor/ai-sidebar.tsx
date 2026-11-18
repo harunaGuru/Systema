@@ -197,7 +197,7 @@ function PromptTab({ projectId }: { projectId: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 rounded-md bg-bg-surface p-4">
-      <form className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden" onSubmit={handleSubmit}>
+      <form className="flex min-h-0 flex-1 flex-col gap-3 p-1" onSubmit={handleSubmit}>
         <label htmlFor="ai-graph-prompt" className="text-sm font-medium text-text-primary">
           Describe the architecture you want to add
         </label>
@@ -206,7 +206,7 @@ function PromptTab({ projectId }: { projectId: string }) {
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="For example: Add a notification service that consumes order events..."
-          className="min-h-[150px] max-h-[300px] flex-1 resize-none overflow-y-auto rounded-md border-border-default bg-bg-base text-text-primary placeholder:text-text-muted focus-visible:ring-accent-primary"
+          className="h-50 resize-none overflow-y-auto rounded-md border-border-default bg-bg-base text-text-primary placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface"
           disabled={isPromptDisabled}
         />
         <Button
